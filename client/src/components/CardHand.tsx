@@ -15,6 +15,9 @@ export function getCardImage(cardId: string): string {
   const realCards: Record<number, string> = {
     1: '/cards/card_001.jpg',
     2: '/cards/card_002.jpg',
+    3: '/cards/card_003.jpg',
+    4: '/cards/card_004.jpg',
+    5: '/cards/card_005.jpg',
   };
   
   if (realCards[num]) return realCards[num];
