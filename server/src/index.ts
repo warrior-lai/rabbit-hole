@@ -14,6 +14,8 @@ const io = new Server(httpServer, {
     origin: '*',
     methods: ['GET', 'POST'],
   },
+  pingInterval: 25000,
+  pingTimeout: 60000,
 });
 
 app.use(cors());
@@ -76,3 +78,8 @@ httpServer.listen(PORT, () => {
   console.log(`\n🐇 Rabbit Hole server running on port ${PORT}`);
   console.log(`⚡ WebSocket ready\n`);
 });
+
+// Keep Render free tier alive (ping every 4 minutes)
+setInterval(() => {
+  fetch(`http://localhost:${PORT}/api/health`).catch(() => {});
+}, 4 * 60 * 1000);

@@ -16,6 +16,12 @@ export function useSocket() {
     const socket: TypedSocket = io(SERVER_URL, {
       autoConnect: true,
       transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionAttempts: 20,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      pingInterval: 25000,
+      pingTimeout: 60000,
     });
 
     socket.on('connect', () => setIsConnected(true));
