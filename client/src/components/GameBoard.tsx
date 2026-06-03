@@ -17,7 +17,7 @@ interface GameBoardProps {
   onVote: (cardId: string) => void;
 }
 
-const TURN_SECONDS = 60;
+const TURN_SECONDS = 30;
 const VOTE_SECONDS = 30;
 
 export function GameBoard({

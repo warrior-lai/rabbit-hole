@@ -12,14 +12,12 @@ export function getCardImage(cardId: string): string {
   const num = parseInt(cardId.replace('card_', ''), 10) || 0;
   
   // Real card art (add more as they come)
-  const realCards: Record<number, string> = {
-    1: '/cards/card_001.jpg',
-    2: '/cards/card_002.jpg',
-    3: '/cards/card_003.jpg',
-    4: '/cards/card_004.jpg',
-    5: '/cards/card_005.jpg',
-    6: '/cards/card_006.jpg',
-  };
+  // Auto-generate card map for all available cards
+  const TOTAL_CARDS = 28;
+  const realCards: Record<number, string> = {};
+  for (let i = 1; i <= TOTAL_CARDS; i++) {
+    realCards[i] = `/cards/card_${String(i).padStart(3, '0')}.jpg`;
+  }
   
   if (realCards[num]) return realCards[num];
   
