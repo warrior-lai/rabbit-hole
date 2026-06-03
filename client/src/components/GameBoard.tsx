@@ -16,6 +16,7 @@ interface GameBoardProps {
   onSubmitClue: (cardId: string, clue: string) => void;
   onPlayCard: (cardId: string) => void;
   onVote: (cardId: string) => void;
+  onNextRound: () => void;
 }
 
 const TURN_SECONDS = 30;
@@ -23,7 +24,7 @@ const VOTE_SECONDS = 30;
 
 export function GameBoard({
   t, gameState, playerId, myHand, revealedCards,
-  onSubmitClue, onPlayCard, onVote
+  onSubmitClue, onPlayCard, onVote, onNextRound
 }: GameBoardProps) {
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
   const [clue, setClue] = useState('');
@@ -264,12 +265,26 @@ export function GameBoard({
 
         {/* SCORING */}
         {gameState.phase === 'scoring' && gameState.roundResults.length > 0 && (
-          <RoundResults
-            t={t}
-            result={gameState.roundResults[gameState.roundResults.length - 1]}
-            players={gameState.players}
-            playerId={playerId}
-          />
+          <div>
+            <RoundResults
+              t={t}
+              result={gameState.roundResults[gameState.roundResults.length - 1]}
+              players={gameState.players}
+              playerId={playerId}
+            />
+            <button
+              className="btn btn-accent"
+              onClick={onNextRound}
+              style={{
+                width: '100%',
+                marginTop: '20px',
+                fontSize: '16px',
+                padding: '16px',
+              }}
+            >
+              ▶ {lang === 'es' ? 'Siguiente Ronda' : 'Next Round'}
+            </button>
+          </div>
         )}
       </div>
 

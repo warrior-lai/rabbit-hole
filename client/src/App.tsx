@@ -138,6 +138,10 @@ export function App() {
     socket?.emit('game:vote', { cardId });
   }, [socket]);
 
+  const handleNextRound = useCallback(() => {
+    socket?.emit('game:next-round');
+  }, [socket]);
+
   const handlePlayAgain = useCallback(() => {
     socket?.emit('game:start');
   }, [socket]);
@@ -229,6 +233,7 @@ export function App() {
           onSubmitClue={handleSubmitClue}
           onPlayCard={handlePlayCard}
           onVote={handleVote}
+          onNextRound={handleNextRound}
         />
       )}
 

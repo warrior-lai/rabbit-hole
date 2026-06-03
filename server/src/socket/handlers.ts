@@ -101,47 +101,55 @@ export function setupSocketHandlers(io: TypedServer, socket: TypedSocket): void 
         io.to(room.id).emit('game:round-result', lastResult);
         io.to(room.id).emit('game:phase-changed', 'scoring');
 
-        // Auto advance after 8 seconds
-        setTimeout(() => {
-          if (!room) return;
-          room.gameState = nextRound(room.gameState);
-
-          if (room.gameState.phase === 'finished') {
-            // Save stats for all players
-            const sorted = [...room.gameState.players].sort((a, b) => b.score - a.score);
-            const winnerId = sorted[0]?.id;
-            room.gameState.players.forEach(p => {
-              // Count correct guesses and deceived for this player across all rounds
-              let correct = 0, total = 0, deceived = 0;
-              room.gameState.roundResults.forEach(r => {
-                if (p.id !== r.storytellerId) {
-                  total++;
-                  const voted = r.votes.find(v => v.voterId === p.id);
-                  if (voted && voted.cardId === r.storytellerCardId) correct++;
-                }
-                const playerCard = r.playedCards.find(c => c.playerId === p.id);
-                if (playerCard && p.id !== r.storytellerId) {
-                  deceived += r.votes.filter(v => v.cardId === playerCard.cardId).length;
-                }
-              });
-              updateStats(p.id, p.name, p.score, p.id === winnerId, correct, total, deceived, p.npub);
-            });
-
-            const finalScores = room.gameState.players.map(p => ({
-              playerId: p.id,
-              score: p.score,
-            }));
-            io.to(room.id).emit('game:finished', finalScores);
-          } else {
-            io.to(room.id).emit('game:phase-changed', room.gameState.phase);
-            io.to(room.id).emit('room:updated', room);
-            room.gameState.players.forEach(p => {
-              io.to(p.id).emit('player:hand', p.hand);
-            });
-          }
-        }, 8000);
+        // Don't auto-advance — wait for host to click 'Next Round'
       } else {
         io.to(room.id).emit('room:updated', room);
+      }
+    } catch (err: any) {
+      socket.emit('error', err.message);
+    }
+  });
+
+  // Next round (manual, triggered by any player)
+  socket.on('game:next-round', () => {
+    try {
+      const room = getRoomByPlayer(socket.id);
+      if (!room) throw new Error('Not in a room');
+      if (room.gameState.phase !== 'scoring') throw new Error('Not in scoring phase');
+
+      room.gameState = nextRound(room.gameState);
+
+      if (room.gameState.phase === 'finished') {
+        // Save stats
+        const sorted = [...room.gameState.players].sort((a, b) => b.score - a.score);
+        const winnerId = sorted[0]?.id;
+        room.gameState.players.forEach(p => {
+          let correct = 0, total = 0, deceived = 0;
+          room.gameState.roundResults.forEach(r => {
+            if (p.id !== r.storytellerId) {
+              total++;
+              const voted = r.votes.find(v => v.voterId === p.id);
+              if (voted && voted.cardId === r.storytellerCardId) correct++;
+            }
+            const playerCard = r.playedCards.find(c => c.playerId === p.id);
+            if (playerCard && p.id !== r.storytellerId) {
+              deceived += r.votes.filter(v => v.cardId === playerCard.cardId).length;
+            }
+          });
+          updateStats(p.id, p.name, p.score, p.id === winnerId, correct, total, deceived, p.npub);
+        });
+
+        const finalScores = room.gameState.players.map(p => ({
+          playerId: p.id,
+          score: p.score,
+        }));
+        io.to(room.id).emit('game:finished', finalScores);
+      } else {
+        io.to(room.id).emit('game:phase-changed', room.gameState.phase);
+        io.to(room.id).emit('room:updated', room);
+        room.gameState.players.forEach(p => {
+          io.to(p.id).emit('player:hand', p.hand);
+        });
       }
     } catch (err: any) {
       socket.emit('error', err.message);
