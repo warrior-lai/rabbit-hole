@@ -5,6 +5,7 @@ import { VotingBoard } from './VotingBoard';
 import { RoundResults } from './RoundResults';
 import { Scoreboard } from './Scoreboard';
 import { Timer } from './Timer';
+import { PhaseInstruction } from './PhaseInstruction';
 
 interface GameBoardProps {
   t: (key: string) => string;
@@ -32,6 +33,7 @@ export function GameBoard({
   const hasVoted = gameState.votes.some(v => v.voterId === playerId);
   const myPlayedCard = gameState.playedCards.find(c => c.playerId === playerId)?.cardId;
   const activePlayers = gameState.players.filter(p => p.isConnected);
+  const lang = gameState.language || (navigator.language.startsWith('es') ? 'es' : 'en');
 
   const handleClueSubmit = useCallback(() => {
     if (selectedCard && clue.trim()) {
@@ -40,6 +42,14 @@ export function GameBoard({
       setSelectedCard(null);
     }
   }, [selectedCard, clue, onSubmitClue]);
+
+  // Determine instruction phase
+  const getInstructionPhase = () => {
+    if (gameState.phase === 'storytelling') return isStoryteller ? 'storytelling-you' : 'storytelling-wait';
+    if (gameState.phase === 'choosing') return hasPlayed || isStoryteller ? 'choosing-done' : 'choosing';
+    if (gameState.phase === 'voting') return hasVoted || isStoryteller ? 'voting-done' : 'voting';
+    return 'scoring';
+  };
 
   return (
     <div style={{
@@ -51,75 +61,123 @@ export function GameBoard({
       margin: '0 auto',
       width: '100%',
     }}>
-      {/* Header */}
+      {/* ===== HEADER BAR ===== */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: '8px 0',
-        borderBottom: '1px solid #1a1a1a',
-        marginBottom: '16px',
+        padding: '10px 14px',
+        background: 'rgba(10,10,15,0.5)',
+        borderRadius: '12px',
+        backdropFilter: 'blur(16px)',
+        marginBottom: '12px',
+        border: '1px solid rgba(255,255,255,0.05)',
       }}>
-        <span style={{ fontSize: '13px' }}>
-          <span style={{ color: '#F7931A', fontWeight: 700 }}>🐇 </span>
-          <span style={{ color: '#555' }}>Round </span>
-          <span style={{ color: '#fff', fontWeight: 700 }}>{gameState.round}</span>
-        </span>
-        <span style={{ fontSize: '12px', color: '#666' }}>
-          🎭 {storyteller?.name}
-          {isStoryteller && <span style={{ color: '#F7931A' }}> ({t('you')})</span>}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '18px' }}>🐇</span>
+          <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '12px' }}>
+            {lang === 'es' ? 'Ronda' : 'Round'}
+          </span>
+          <span style={{ color: '#F7931A', fontWeight: 700, fontSize: '16px' }}>
+            {gameState.round}
+          </span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <span style={{ fontSize: '14px' }}>🎭</span>
+          <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)' }}>
+            {storyteller?.name}
+            {isStoryteller && <span style={{ color: '#F7931A' }}> ({lang === 'es' ? 'vos' : 'you'})</span>}
+          </span>
+        </div>
+        <div style={{
+          fontSize: '11px',
+          color: 'rgba(255,255,255,0.3)',
+        }}>
+          {activePlayers.length} 👥
+        </div>
       </div>
 
-      {/* Persistent clue banner — always visible when there's a clue */}
+      {/* ===== PERSISTENT CLUE BANNER ===== */}
       {gameState.clue && gameState.phase !== 'storytelling' && (
         <div style={{
-          width: '100%',
-          maxWidth: '800px',
-          background: 'rgba(247,147,26,0.1)',
-          border: '1px solid rgba(247,147,26,0.25)',
+          background: 'rgba(247,147,26,0.08)',
+          border: '1px solid rgba(247,147,26,0.2)',
           borderRadius: '16px',
-          padding: '14px 20px',
-          marginBottom: '16px',
+          padding: '16px 20px',
+          marginBottom: '12px',
           textAlign: 'center',
           backdropFilter: 'blur(20px)',
         }}>
-          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '10px', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '4px' }}>
+          <p style={{
+            color: 'rgba(255,255,255,0.35)',
+            fontSize: '10px',
+            letterSpacing: '2px',
+            textTransform: 'uppercase',
+            marginBottom: '6px',
+          }}>
             🎭 {storyteller?.name}
           </p>
-          <p style={{ fontSize: '22px', fontWeight: 700, color: '#F7931A' }}>
+          <p style={{
+            fontSize: '24px',
+            fontWeight: 700,
+            color: '#F7931A',
+            textShadow: '0 0 20px rgba(247,147,26,0.2)',
+          }}>
             "{gameState.clue}"
           </p>
         </div>
       )}
 
-      {/* Main content */}
+      {/* ===== INSTRUCTION BANNER ===== */}
+      {gameState.phase !== 'scoring' && (
+        <PhaseInstruction
+          lang={lang}
+          phase={getInstructionPhase() as any}
+          storytellerName={storyteller?.name}
+        />
+      )}
+
+      {/* ===== TIMER ===== */}
+      {((gameState.phase === 'storytelling' && isStoryteller) ||
+        (gameState.phase === 'choosing' && !isStoryteller && !hasPlayed) ||
+        (gameState.phase === 'voting' && !isStoryteller && !hasVoted)) && (
+        <Timer
+          seconds={gameState.phase === 'voting' ? VOTE_SECONDS : TURN_SECONDS}
+          onTimeUp={() => {}}
+        />
+      )}
+
+      {/* ===== MAIN CONTENT ===== */}
       <div style={{ flex: 1 }}>
 
-        {/* ===== STORYTELLING ===== */}
+        {/* STORYTELLING: Storyteller picks card + clue */}
         {gameState.phase === 'storytelling' && isStoryteller && (
-          <div className="fade-in" style={{ textAlign: 'center' }}>
-            <h2 style={{ fontSize: '18px', marginBottom: '4px', color: '#F7931A' }}>
-              🎭 {t('yourTurn')}
-            </h2>
-            <Timer seconds={TURN_SECONDS} onTimeUp={() => {}} />
+          <div className="fade-in">
             <CardHand cards={myHand} selectedCard={selectedCard} onSelect={setSelectedCard} />
             {selectedCard && (
               <div style={{
-                display: 'flex', gap: '8px',
-                maxWidth: '400px', margin: '16px auto 0',
+                display: 'flex',
+                gap: '8px',
+                maxWidth: '400px',
+                margin: '16px auto 0',
               }}>
                 <input
                   className="input"
                   type="text"
-                  placeholder={t('enterClue')}
+                  placeholder={lang === 'es' ? 'Escribí tu pista...' : 'Write your clue...'}
                   value={clue}
                   onChange={(e) => setClue(e.target.value)}
                   maxLength={100}
                   autoFocus
                   onKeyDown={(e) => e.key === 'Enter' && handleClueSubmit()}
+                  style={{ borderRadius: '12px' }}
                 />
-                <button className="btn btn-primary" disabled={!clue.trim()} onClick={handleClueSubmit}>
+                <button
+                  className="btn btn-accent"
+                  disabled={!clue.trim()}
+                  onClick={handleClueSubmit}
+                  style={{ padding: '14px 20px', borderRadius: '12px' }}
+                >
                   ✓
                 </button>
               </div>
@@ -127,78 +185,84 @@ export function GameBoard({
           </div>
         )}
 
+        {/* STORYTELLING: Others wait */}
         {gameState.phase === 'storytelling' && !isStoryteller && (
-          <div className="fade-in" style={{ textAlign: 'center', paddingTop: '40px' }}>
-            <div className="pulse" style={{ fontSize: '56px', marginBottom: '16px' }}>🎭</div>
-            <p style={{ color: '#888', fontSize: '16px' }}>
-              <strong>{storyteller?.name}</strong> {lang === 'es' ? 'está pensando...' : 'is thinking...'}
-            </p>
-            <p style={{ color: '#444', fontSize: '12px', marginTop: '8px' }}>
-              {t('waitingForCards')}
-            </p>
+          <div className="fade-in" style={{ textAlign: 'center', paddingTop: '32px' }}>
+            <div className="pulse" style={{
+              fontSize: '64px',
+              filter: 'drop-shadow(0 0 20px rgba(247,147,26,0.3))',
+            }}>🎭</div>
           </div>
         )}
 
-        {/* ===== CHOOSING ===== */}
-        {gameState.phase === 'choosing' && (
-          <div className="fade-in" style={{ textAlign: 'center' }}>
-            {!isStoryteller && !hasPlayed && (
-              <>
-                <Timer seconds={TURN_SECONDS} onTimeUp={() => {}} />
-                <p style={{ color: '#999', fontSize: '13px', marginBottom: '8px' }}>
-                  {t('pickCard')}
-                </p>
-                <CardHand
-                  cards={myHand}
-                  selectedCard={null}
-                  onSelect={(id) => onPlayCard(id)}
-                />
-              </>
-            )}
-
-            {(isStoryteller || hasPlayed) && (
-              <div style={{ paddingTop: '16px' }}>
-                <p className="pulse" style={{ color: '#555', fontSize: '14px' }}>
-                  {t('waitingForCards')}
-                </p>
-                <p style={{ color: '#333', fontSize: '12px', marginTop: '4px' }}>
-                  {gameState.playedCards.length}/{activePlayers.length} ✓
-                </p>
-              </div>
-            )}
+        {/* CHOOSING: Pick your card */}
+        {gameState.phase === 'choosing' && !isStoryteller && !hasPlayed && (
+          <div className="fade-in">
+            <CardHand
+              cards={myHand}
+              selectedCard={null}
+              onSelect={(id) => onPlayCard(id)}
+            />
           </div>
         )}
 
-        {/* ===== VOTING ===== */}
-        {gameState.phase === 'voting' && (
-          <div className="fade-in" style={{ textAlign: 'center' }}>
-            {!isStoryteller && !hasVoted ? (
-              <>
-                <Timer seconds={VOTE_SECONDS} onTimeUp={() => {}} />
-                <p style={{ color: '#999', fontSize: '13px', marginBottom: '8px' }}>
-                  {t('voteNow')}
-                </p>
-                <VotingBoard
-                  cards={revealedCards}
-                  myCardId={myPlayedCard}
-                  onVote={onVote}
-                  cantVoteOwnText={t('cantVoteOwn')}
-                />
-              </>
-            ) : (
-              <div style={{ paddingTop: '16px' }}>
-                <p className="pulse" style={{ color: '#555', fontSize: '14px' }}>
-                  {t('waitingForVotes')}
-                </p>
-                <p style={{ color: '#333', fontSize: '12px', marginTop: '4px' }}>
-                  {gameState.votes.length}/{activePlayers.filter(p => p.id !== gameState.currentStorytellerId).length} ✓
-                </p>
-              </div>
-            )}
+        {/* CHOOSING: Waiting */}
+        {gameState.phase === 'choosing' && (isStoryteller || hasPlayed) && (
+          <div style={{ textAlign: 'center', paddingTop: '24px' }}>
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '10px 20px',
+              background: 'rgba(255,255,255,0.04)',
+              borderRadius: '30px',
+              fontSize: '13px',
+              color: 'rgba(255,255,255,0.4)',
+            }}>
+              <span className="pulse">⏳</span>
+              {gameState.playedCards.length}/{activePlayers.length}
+              <span style={{ color: 'rgba(255,255,255,0.2)' }}>
+                {lang === 'es' ? 'cartas elegidas' : 'cards chosen'}
+              </span>
+            </div>
           </div>
         )}
 
-        {/* ===== SCORING ===== */}
+        {/* VOTING: Vote for storyteller's card */}
+        {gameState.phase === 'voting' && !isStoryteller && !hasVoted && (
+          <div className="fade-in">
+            <VotingBoard
+              cards={revealedCards}
+              myCardId={myPlayedCard}
+              onVote={onVote}
+              cantVoteOwnText={t('cantVoteOwn')}
+            />
+          </div>
+        )}
+
+        {/* VOTING: Waiting */}
+        {gameState.phase === 'voting' && (isStoryteller || hasVoted) && (
+          <div style={{ textAlign: 'center', paddingTop: '24px' }}>
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '10px 20px',
+              background: 'rgba(255,255,255,0.04)',
+              borderRadius: '30px',
+              fontSize: '13px',
+              color: 'rgba(255,255,255,0.4)',
+            }}>
+              <span className="pulse">🗳️</span>
+              {gameState.votes.length}/{activePlayers.filter(p => p.id !== gameState.currentStorytellerId).length}
+              <span style={{ color: 'rgba(255,255,255,0.2)' }}>
+                {lang === 'es' ? 'votos' : 'votes'}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* SCORING */}
         {gameState.phase === 'scoring' && gameState.roundResults.length > 0 && (
           <RoundResults
             t={t}
@@ -209,13 +273,14 @@ export function GameBoard({
         )}
       </div>
 
-      {/* Scoreboard - always at bottom */}
-      <div style={{ marginTop: '16px', paddingTop: '12px', borderTop: '1px solid #1a1a1a' }}>
+      {/* ===== SCOREBOARD ===== */}
+      <div style={{
+        marginTop: '16px',
+        paddingTop: '12px',
+        borderTop: '1px solid rgba(255,255,255,0.05)',
+      }}>
         <Scoreboard players={gameState.players} currentStorytellerId={gameState.currentStorytellerId} />
       </div>
     </div>
   );
 }
-
-// Need lang for the waiting message
-const lang = navigator.language.startsWith('es') ? 'es' : 'en';
