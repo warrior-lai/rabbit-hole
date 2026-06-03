@@ -18,6 +18,7 @@ export function getCardImage(cardId: string): string {
     3: '/cards/card_003.jpg',
     4: '/cards/card_004.jpg',
     5: '/cards/card_005.jpg',
+    6: '/cards/card_006.jpg',
   };
   
   if (realCards[num]) return realCards[num];
