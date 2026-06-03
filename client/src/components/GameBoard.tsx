@@ -71,6 +71,28 @@ export function GameBoard({
         </span>
       </div>
 
+      {/* Persistent clue banner — always visible when there's a clue */}
+      {gameState.clue && gameState.phase !== 'storytelling' && (
+        <div style={{
+          width: '100%',
+          maxWidth: '800px',
+          background: 'rgba(247,147,26,0.1)',
+          border: '1px solid rgba(247,147,26,0.25)',
+          borderRadius: '16px',
+          padding: '14px 20px',
+          marginBottom: '16px',
+          textAlign: 'center',
+          backdropFilter: 'blur(20px)',
+        }}>
+          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '10px', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '4px' }}>
+            🎭 {storyteller?.name}
+          </p>
+          <p style={{ fontSize: '22px', fontWeight: 700, color: '#F7931A' }}>
+            "{gameState.clue}"
+          </p>
+        </div>
+      )}
+
       {/* Main content */}
       <div style={{ flex: 1 }}>
 
@@ -120,23 +142,6 @@ export function GameBoard({
         {/* ===== CHOOSING ===== */}
         {gameState.phase === 'choosing' && (
           <div className="fade-in" style={{ textAlign: 'center' }}>
-            {/* Clue display */}
-            <div style={{
-              background: 'linear-gradient(135deg, #111 0%, #0a0a0a 100%)',
-              border: '1px solid #F7931A',
-              borderRadius: '16px',
-              padding: '20px 28px',
-              marginBottom: '20px',
-              boxShadow: '0 0 30px rgba(247,147,26,0.05)',
-            }}>
-              <p style={{ color: '#666', fontSize: '11px', letterSpacing: '2px', marginBottom: '6px' }}>
-                {t('storytellerClue').toUpperCase()}
-              </p>
-              <p style={{ fontSize: '26px', fontWeight: 700, color: '#F7931A' }}>
-                "{gameState.clue}"
-              </p>
-            </div>
-
             {!isStoryteller && !hasPlayed && (
               <>
                 <Timer seconds={TURN_SECONDS} onTimeUp={() => {}} />
@@ -167,18 +172,6 @@ export function GameBoard({
         {/* ===== VOTING ===== */}
         {gameState.phase === 'voting' && (
           <div className="fade-in" style={{ textAlign: 'center' }}>
-            <div style={{
-              background: '#0a0a0a',
-              borderRadius: '12px',
-              padding: '12px 20px',
-              marginBottom: '12px',
-              border: '1px solid #1a1a1a',
-            }}>
-              <p style={{ color: '#F7931A', fontWeight: 700, fontSize: '20px' }}>
-                "{gameState.clue}"
-              </p>
-            </div>
-
             {!isStoryteller && !hasVoted ? (
               <>
                 <Timer seconds={VOTE_SECONDS} onTimeUp={() => {}} />
