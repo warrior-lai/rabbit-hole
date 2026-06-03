@@ -13,7 +13,7 @@ export function getCardImage(cardId: string): string {
   
   // Real card art (add more as they come)
   // Auto-generate card map for all available cards
-  const TOTAL_CARDS = 28;
+  const TOTAL_CARDS = 27;
   const realCards: Record<number, string> = {};
   for (let i = 1; i <= TOTAL_CARDS; i++) {
     realCards[i] = `/cards/card_${String(i).padStart(3, '0')}.jpg`;
