@@ -8,7 +8,7 @@ interface RulesProps {
 const rules = {
   en: {
     title: 'How to Play',
-    subtitle: 'A game of imagination and deception',
+    subtitle: 'A game of imagination and revelations',
     sections: [
       {
         icon: '🎮',
@@ -53,7 +53,7 @@ const rules = {
   },
   es: {
     title: 'Cómo Jugar',
-    subtitle: 'Un juego de imaginación y engaño',
+    subtitle: 'Un juego de imaginación y revelaciones',
     sections: [
       {
         icon: '🎮',
