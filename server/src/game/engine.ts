@@ -1,14 +1,23 @@
 import type { GameState, Player, RoundResult, Vote, Language } from '../../../shared/types';
 
 const HAND_SIZE = 6;
-const CARDS_PER_GAME = 84;
 
-// Generate card IDs (will map to actual images later)
-function generateDeck(): string[] {
+// Real cards available — update this number as more art is added
+const TOTAL_REAL_CARDS = 6;
+
+// Generate deck using only real cards, with duplicates if needed for enough rounds
+function generateDeck(playerCount: number): string[] {
+  const minCards = playerCount * HAND_SIZE + playerCount * 4; // enough for several rounds
   const deck: string[] = [];
-  for (let i = 1; i <= CARDS_PER_GAME; i++) {
-    deck.push(`card_${String(i).padStart(3, '0')}`);
+  
+  // Add all real cards, repeat if needed
+  while (deck.length < minCards) {
+    for (let i = 1; i <= TOTAL_REAL_CARDS; i++) {
+      deck.push(`card_${String(i).padStart(3, '0')}`);
+      if (deck.length >= minCards) break;
+    }
   }
+  
   // Shuffle
   for (let i = deck.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -23,7 +32,7 @@ export function createGameState(
   language: Language,
   isPrivate: boolean
 ): GameState {
-  const deck = generateDeck();
+  const deck = generateDeck(players.length);
   const maxRounds = Math.floor(deck.length / players.length);
 
   // Deal cards
