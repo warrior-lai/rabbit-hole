@@ -5,9 +5,10 @@ import { Landing } from './pages/Landing';
 import { Lobby } from './pages/Lobby';
 import { GameBoard } from './components/GameBoard';
 import { GameOver } from './components/GameOver';
+import { GameCancelled } from './components/GameCancelled';
 import type { Room, GameState } from '@shared/types';
 
-type Screen = 'landing' | 'lobby' | 'game' | 'results';
+type Screen = 'landing' | 'lobby' | 'game' | 'results' | 'cancelled';
 
 export function App() {
   const { lang, t, toggleLang } = useLanguage();
@@ -71,6 +72,14 @@ export function App() {
 
     socket.on('game:finished', () => {
       setScreen('results');
+    });
+
+    socket.on('game:cancelled', () => {
+      setScreen('cancelled');
+    });
+
+    socket.on('host:changed', () => {
+      // Host transfer handled silently
     });
 
     socket.on('error', (msg) => {
@@ -212,6 +221,14 @@ export function App() {
           players={gameState.players}
           onPlayAgain={handlePlayAgain}
           onBackToLobby={handleBackToLobby}
+        />
+      )}
+
+      {screen === 'cancelled' && (
+        <GameCancelled
+          lang={lang}
+          reason="not_enough_players"
+          onNewGame={handleBackToLobby}
         />
       )}
     </>

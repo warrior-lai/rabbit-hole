@@ -121,12 +121,12 @@ export function getRoomByPlayer(playerId: string): Room | undefined {
   return roomId ? rooms.get(roomId) : undefined;
 }
 
-export function removePlayer(playerId: string): Room | undefined {
+export function removePlayer(playerId: string): { room: Room | undefined; tooFewPlayers: boolean } {
   const roomId = playerRooms.get(playerId);
-  if (!roomId) return undefined;
+  if (!roomId) return { room: undefined, tooFewPlayers: false };
 
   const room = rooms.get(roomId);
-  if (!room) return undefined;
+  if (!room) return { room: undefined, tooFewPlayers: false };
 
   const player = room.gameState.players.find(p => p.id === playerId);
   if (player) {
@@ -139,7 +139,7 @@ export function removePlayer(playerId: string): Room | undefined {
   const connected = room.gameState.players.filter(p => p.isConnected);
   if (connected.length === 0) {
     rooms.delete(roomId);
-    return undefined;
+    return { room: undefined, tooFewPlayers: false };
   }
 
   // If host left, transfer to next connected player
@@ -147,5 +147,9 @@ export function removePlayer(playerId: string): Room | undefined {
     room.hostId = connected[0].id;
   }
 
-  return room;
+  // If game is running and fewer than 3 players remain, flag it
+  const isInGame = room.gameState.phase !== 'waiting' && room.gameState.phase !== 'finished';
+  const tooFewPlayers = isInGame && connected.length < 3;
+
+  return { room, tooFewPlayers };
 }

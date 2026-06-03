@@ -82,9 +82,11 @@ export interface ServerToClientEvents {
   'game:cards-revealed': (cards: { playerId: string; cardId: string }[]) => void;
   'game:round-result': (result: RoundResult) => void;
   'game:finished': (finalScores: { playerId: string; score: number }[]) => void;
+  'game:cancelled': (reason: string) => void;
   'player:joined': (player: Player) => void;
   'player:left': (playerId: string) => void;
   'player:hand': (cards: string[]) => void;
+  'host:changed': (newHostId: string) => void;
   'error': (message: string) => void;
 }
 

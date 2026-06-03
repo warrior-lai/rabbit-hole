@@ -129,10 +129,18 @@ export function setupSocketHandlers(io: TypedServer, socket: TypedSocket): void 
 
   // Disconnect
   socket.on('disconnect', () => {
-    const updatedRoom = removePlayer(socket.id);
+    const { room: updatedRoom, tooFewPlayers } = removePlayer(socket.id);
     if (updatedRoom) {
       io.to(updatedRoom.id).emit('player:left', socket.id);
-      io.to(updatedRoom.id).emit('room:updated', updatedRoom);
+      io.to(updatedRoom.id).emit('host:changed', updatedRoom.hostId);
+
+      if (tooFewPlayers) {
+        // Cancel the game — not enough players
+        updatedRoom.gameState.phase = 'finished';
+        io.to(updatedRoom.id).emit('game:cancelled', 'not_enough_players');
+      } else {
+        io.to(updatedRoom.id).emit('room:updated', updatedRoom);
+      }
     }
   });
 }
