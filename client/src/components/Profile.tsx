@@ -80,7 +80,7 @@ export function Profile({ lang, profile, onClose }: ProfileProps) {
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
           <h2 style={{ fontSize: '22px', fontWeight: 700 }}>
-            👤 {profile.name || (lang === 'es' ? 'Perfil' : 'Profile')}
+            🐇 {profile.name || (lang === 'es' ? 'Perfil' : 'Profile')}
           </h2>
           <button
             onClick={onClose}

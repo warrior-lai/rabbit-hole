@@ -170,7 +170,7 @@ export function Landing({ t, lang, toggleLang, onQuickPlay, onJoinRoom, profile,
                 onMouseEnter={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.6)'}
                 onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.3)'}
               >
-                👤 {lang === 'en' ? 'Profile' : 'Perfil'}
+                🐇 {lang === 'en' ? 'Profile' : 'Perfil'}
               </button>
               <button
                 onClick={() => { onRequestLeaderboard('all'); setShowLeaderboard(true); }}
