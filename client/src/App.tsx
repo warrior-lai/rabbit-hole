@@ -6,7 +6,7 @@ import { Lobby } from './pages/Lobby';
 import { GameBoard } from './components/GameBoard';
 import { GameOver } from './components/GameOver';
 import { GameCancelled } from './components/GameCancelled';
-import type { Room, GameState } from '@shared/types';
+import type { Room, GameState, PlayerProfile, LeaderboardEntry } from '@shared/types';
 
 type Screen = 'landing' | 'lobby' | 'game' | 'results' | 'cancelled';
 
@@ -19,6 +19,13 @@ export function App() {
   const [myHand, setMyHand] = useState<string[]>([]);
   const [revealedCards, setRevealedCards] = useState<{ playerId: string; cardId: string }[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [profile, setProfile] = useState<PlayerProfile | null>(null);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [statsId] = useState(() => {
+    let id = localStorage.getItem('rh-stats-id');
+    if (!id) { id = crypto.randomUUID(); localStorage.setItem('rh-stats-id', id); }
+    return id;
+  });
 
   useEffect(() => {
     if (!socket) return;
@@ -78,8 +85,14 @@ export function App() {
       setScreen('cancelled');
     });
 
-    socket.on('host:changed', () => {
-      // Host transfer handled silently
+    socket.on('host:changed', () => {});
+
+    socket.on('profile:data', (data) => {
+      setProfile(data);
+    });
+
+    socket.on('leaderboard:data', (entries) => {
+      setLeaderboard(entries);
     });
 
     socket.on('error', (msg) => {
@@ -192,6 +205,10 @@ export function App() {
           t={t} lang={lang} toggleLang={toggleLang}
           onQuickPlay={(name: string, npub?: string) => handleQuickPlay(name, npub)}
           onJoinRoom={(name: string, code: string, npub?: string) => handleJoinRoom(name, code, npub)}
+          profile={profile}
+          leaderboard={leaderboard}
+          onRequestProfile={() => socket?.emit('profile:get', { statsId })}
+          onRequestLeaderboard={(period) => socket?.emit('leaderboard:get', { period })}
         />
       )}
 

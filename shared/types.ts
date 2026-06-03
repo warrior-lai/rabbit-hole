@@ -83,6 +83,8 @@ export interface ServerToClientEvents {
   'game:round-result': (result: RoundResult) => void;
   'game:finished': (finalScores: { playerId: string; score: number }[]) => void;
   'game:cancelled': (reason: string) => void;
+  'profile:data': (profile: PlayerProfile) => void;
+  'leaderboard:data': (entries: LeaderboardEntry[]) => void;
   'player:joined': (player: Player) => void;
   'player:left': (playerId: string) => void;
   'player:hand': (cards: string[]) => void;
@@ -90,11 +92,35 @@ export interface ServerToClientEvents {
   'error': (message: string) => void;
 }
 
+export interface PlayerProfile {
+  id: string;
+  name: string;
+  npub?: string;
+  gamesPlayed: number;
+  gamesWon: number;
+  totalPoints: number;
+  correctGuesses: number;
+  totalGuesses: number;
+  timesDeceived: number;
+  bestScore: number;
+  lastPlayed: number;
+}
+
+export interface LeaderboardEntry {
+  name: string;
+  npub?: string;
+  totalPoints: number;
+  gamesPlayed: number;
+  gamesWon: number;
+}
+
 export interface ClientToServerEvents {
-  'room:create': (data: { playerName: string; npub?: string; language: Language; isPrivate: boolean }) => void;
-  'room:join': (data: { code: string; playerName: string; npub?: string }) => void;
+  'room:create': (data: { playerName: string; npub?: string; language: Language; isPrivate: boolean; statsId?: string }) => void;
+  'room:join': (data: { code: string; playerName: string; npub?: string; statsId?: string }) => void;
   'game:start': () => void;
   'game:submit-clue': (data: { cardId: string; clue: string }) => void;
   'game:play-card': (data: { cardId: string }) => void;
   'game:vote': (data: { cardId: string }) => void;
+  'profile:get': (data: { statsId: string }) => void;
+  'leaderboard:get': (data: { period: 'all' | 'weekly' }) => void;
 }

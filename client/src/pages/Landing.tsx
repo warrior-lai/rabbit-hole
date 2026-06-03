@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
-import type { Language } from '@shared/types';
+import type { Language, PlayerProfile, LeaderboardEntry } from '@shared/types';
 import { Rules } from '../components/Rules';
 import { NameOrNostr } from '../components/NameOrNostr';
+import { Profile } from '../components/Profile';
+import { Leaderboard } from '../components/Leaderboard';
 
 interface LandingProps {
   t: (key: string) => string;
@@ -9,13 +11,19 @@ interface LandingProps {
   toggleLang: () => void;
   onQuickPlay: (name: string, npub?: string) => void;
   onJoinRoom: (name: string, code: string, npub?: string) => void;
+  profile: PlayerProfile | null;
+  leaderboard: LeaderboardEntry[];
+  onRequestProfile: () => void;
+  onRequestLeaderboard: (period: 'all' | 'weekly') => void;
 }
 
 type Mode = 'home' | 'create-identity' | 'join-identity' | 'join-code';
 
-export function Landing({ t, lang, toggleLang, onQuickPlay, onJoinRoom }: LandingProps) {
+export function Landing({ t, lang, toggleLang, onQuickPlay, onJoinRoom, profile, leaderboard, onRequestProfile, onRequestLeaderboard }: LandingProps) {
   const [mode, setMode] = useState<Mode>('home');
   const [showRules, setShowRules] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [roomCode, setRoomCode] = useState('');
   const [playerName, setPlayerName] = useState('');
@@ -135,24 +143,48 @@ export function Landing({ t, lang, toggleLang, onQuickPlay, onJoinRoom }: Landin
               🚪 {t('joinRoom')}
             </button>
 
-            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', marginTop: '16px' }}>
               <button
                 onClick={() => setShowRules(true)}
                 style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'rgba(255,255,255,0.3)',
-                  fontSize: '12px',
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                  letterSpacing: '0.5px',
-                  padding: '4px 8px',
+                  background: 'none', border: 'none',
+                  color: 'rgba(255,255,255,0.3)', fontSize: '12px',
+                  cursor: 'pointer', fontFamily: 'inherit',
+                  letterSpacing: '0.5px', padding: '4px 8px',
                   transition: 'color 0.2s',
                 }}
                 onMouseEnter={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.6)'}
                 onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.3)'}
               >
                 📋 {lang === 'en' ? 'How to play' : 'Cómo jugar'}
+              </button>
+              <button
+                onClick={() => { onRequestProfile(); setShowProfile(true); }}
+                style={{
+                  background: 'none', border: 'none',
+                  color: 'rgba(255,255,255,0.3)', fontSize: '12px',
+                  cursor: 'pointer', fontFamily: 'inherit',
+                  letterSpacing: '0.5px', padding: '4px 8px',
+                  transition: 'color 0.2s',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.6)'}
+                onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.3)'}
+              >
+                👤 {lang === 'en' ? 'Profile' : 'Perfil'}
+              </button>
+              <button
+                onClick={() => { onRequestLeaderboard('all'); setShowLeaderboard(true); }}
+                style={{
+                  background: 'none', border: 'none',
+                  color: 'rgba(255,255,255,0.3)', fontSize: '12px',
+                  cursor: 'pointer', fontFamily: 'inherit',
+                  letterSpacing: '0.5px', padding: '4px 8px',
+                  transition: 'color 0.2s',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.6)'}
+                onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.3)'}
+              >
+                🏆 {lang === 'en' ? 'Ranking' : 'Ranking'}
               </button>
             </div>
           </div>
@@ -264,6 +296,8 @@ export function Landing({ t, lang, toggleLang, onQuickPlay, onJoinRoom }: Landin
       </div>
 
       {showRules && <Rules lang={lang} onClose={() => setShowRules(false)} />}
+      {showProfile && profile && <Profile lang={lang} profile={profile} onClose={() => setShowProfile(false)} />}
+      {showLeaderboard && <Leaderboard lang={lang} entries={leaderboard} onClose={() => setShowLeaderboard(false)} onChangePeriod={onRequestLeaderboard} />}
 
       <style>{`
         @keyframes gentleBounce {

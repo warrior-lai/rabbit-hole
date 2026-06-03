@@ -2,6 +2,7 @@ import type { Server, Socket } from 'socket.io';
 import type { ClientToServerEvents, ServerToClientEvents } from '../../../shared/types';
 import { createRoom, joinRoom, startGame, getRoomByPlayer, removePlayer } from '../game/rooms';
 import { submitClue, playCard, submitVote, nextRound } from '../game/engine';
+import { getStats, updateStats, getLeaderboard, getWeeklyLeaderboard } from '../game/stats';
 
 type TypedSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
 type TypedServer = Server<ClientToServerEvents, ServerToClientEvents>;
@@ -106,6 +107,26 @@ export function setupSocketHandlers(io: TypedServer, socket: TypedSocket): void 
           room.gameState = nextRound(room.gameState);
 
           if (room.gameState.phase === 'finished') {
+            // Save stats for all players
+            const sorted = [...room.gameState.players].sort((a, b) => b.score - a.score);
+            const winnerId = sorted[0]?.id;
+            room.gameState.players.forEach(p => {
+              // Count correct guesses and deceived for this player across all rounds
+              let correct = 0, total = 0, deceived = 0;
+              room.gameState.roundResults.forEach(r => {
+                if (p.id !== r.storytellerId) {
+                  total++;
+                  const voted = r.votes.find(v => v.voterId === p.id);
+                  if (voted && voted.cardId === r.storytellerCardId) correct++;
+                }
+                const playerCard = r.playedCards.find(c => c.playerId === p.id);
+                if (playerCard && p.id !== r.storytellerId) {
+                  deceived += r.votes.filter(v => v.cardId === playerCard.cardId).length;
+                }
+              });
+              updateStats(p.id, p.name, p.score, p.id === winnerId, correct, total, deceived, p.npub);
+            });
+
             const finalScores = room.gameState.players.map(p => ({
               playerId: p.id,
               score: p.score,
@@ -125,6 +146,39 @@ export function setupSocketHandlers(io: TypedServer, socket: TypedSocket): void 
     } catch (err: any) {
       socket.emit('error', err.message);
     }
+  });
+
+  // Profile
+  socket.on('profile:get', (data) => {
+    const stats = getStats(data.statsId);
+    if (stats) {
+      socket.emit('profile:data', stats);
+    } else {
+      socket.emit('profile:data', {
+        id: data.statsId,
+        name: '',
+        gamesPlayed: 0,
+        gamesWon: 0,
+        totalPoints: 0,
+        correctGuesses: 0,
+        totalGuesses: 0,
+        timesDeceived: 0,
+        bestScore: 0,
+        lastPlayed: 0,
+      });
+    }
+  });
+
+  // Leaderboard
+  socket.on('leaderboard:get', (data) => {
+    const entries = data.period === 'weekly' ? getWeeklyLeaderboard() : getLeaderboard();
+    socket.emit('leaderboard:data', entries.map(e => ({
+      name: e.name,
+      npub: e.npub,
+      totalPoints: e.totalPoints,
+      gamesPlayed: e.gamesPlayed,
+      gamesWon: e.gamesWon,
+    })));
   });
 
   // Disconnect
