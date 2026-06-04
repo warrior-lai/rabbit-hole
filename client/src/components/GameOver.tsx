@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import type { Player } from '@shared/types';
+import confetti from 'canvas-confetti';
 
 interface GameOverProps {
   t: (key: string) => string;
@@ -11,10 +12,38 @@ interface GameOverProps {
 export function GameOver({ t, players, onPlayAgain, onBackToLobby }: GameOverProps) {
   const sorted = [...players].sort((a, b) => b.score - a.score);
   const winner = sorted[0];
-  const [showConfetti, setShowConfetti] = useState(false);
-
   useEffect(() => {
-    setTimeout(() => setShowConfetti(true), 300);
+    // Fire confetti burst
+    const fire = () => {
+      // Left side
+      confetti({
+        particleCount: 80,
+        spread: 70,
+        origin: { x: 0.1, y: 0.6 },
+        colors: ['#F7931A', '#ff6b00', '#ffaa00', '#fff', '#EC4899', '#8B5CF6'],
+      });
+      // Right side
+      confetti({
+        particleCount: 80,
+        spread: 70,
+        origin: { x: 0.9, y: 0.6 },
+        colors: ['#F7931A', '#ff6b00', '#ffaa00', '#fff', '#EC4899', '#8B5CF6'],
+      });
+      // Center top
+      confetti({
+        particleCount: 100,
+        spread: 100,
+        origin: { x: 0.5, y: 0.3 },
+        colors: ['#F7931A', '#ff6b00', '#ffaa00', '#fff', '#EC4899', '#8B5CF6'],
+      });
+    };
+
+    // Initial burst
+    setTimeout(fire, 500);
+    // Second burst
+    setTimeout(fire, 1500);
+    // Third burst
+    setTimeout(fire, 2500);
   }, []);
 
   return (
