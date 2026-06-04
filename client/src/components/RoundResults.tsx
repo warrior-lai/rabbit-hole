@@ -195,7 +195,7 @@ export function RoundResults({ t, result, players, playerId }: RoundResultsProps
                 <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: '10px' }}>
                   {s.reason === 'good_clue' ? (lang === 'es' ? 'buena pista' : 'good clue') :
                    s.reason === 'correct_guess' ? (lang === 'es' ? 'adivinó' : 'guessed right') :
-                   s.reason === 'deceived' ? (lang === 'es' ? 'engañó' : 'fooled players') :
+                   s.reason === 'deceived' ? (lang === 'es' ? 'confundió rivales' : 'tricked opponents') :
                    s.reason === 'storyteller_failed' ? (lang === 'es' ? 'bonus' : 'bonus') :
                    lang === 'es' ? 'sin puntos' : 'no points'}
                 </span>

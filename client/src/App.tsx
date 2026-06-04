@@ -36,8 +36,12 @@ export function App() {
       if (updatedRoom.gameState.phase === 'waiting') {
         setScreen('lobby');
       }
-      if (updatedRoom.gameState.phase !== 'waiting') {
-        setGameState(updatedRoom.gameState);
+      // Don't overwrite scoring phase — results must stay visible
+      if (updatedRoom.gameState.phase !== 'waiting' && updatedRoom.gameState.phase !== 'scoring') {
+        setGameState(prev => {
+          if (prev?.phase === 'scoring') return prev; // keep scoring visible
+          return updatedRoom.gameState;
+        });
       }
     });
 
