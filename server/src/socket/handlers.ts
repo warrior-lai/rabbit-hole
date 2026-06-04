@@ -236,19 +236,38 @@ export function setupSocketHandlers(io: TypedServer, socket: TypedSocket): void 
   });
 
   // Disconnect
+  // Grace period before removing player (handles brief disconnects)
   socket.on('disconnect', () => {
-    const { room: updatedRoom, tooFewPlayers } = removePlayer(socket.id);
-    if (updatedRoom) {
-      io.to(updatedRoom.id).emit('player:left', socket.id);
-      io.to(updatedRoom.id).emit('host:changed', updatedRoom.hostId);
+    const room = getRoomByPlayer(socket.id);
+    if (!room) return;
 
-      if (tooFewPlayers) {
-        // Cancel the game — not enough players
-        updatedRoom.gameState.phase = 'finished';
-        io.to(updatedRoom.id).emit('game:cancelled', 'not_enough_players');
-      } else {
-        io.to(updatedRoom.id).emit('room:updated', updatedRoom);
+    // Mark as temporarily disconnected
+    const player = room.gameState.players.find(p => p.id === socket.id);
+    if (player) player.isConnected = false;
+    io.to(room.id).emit('room:updated', room);
+
+    // Wait 15 seconds before actually removing
+    setTimeout(() => {
+      // Check if they reconnected (socket would rejoin)
+      const currentRoom = getRoomByPlayer(socket.id);
+      if (!currentRoom) return; // already removed or room gone
+
+      const p = currentRoom.gameState.players.find(pl => pl.id === socket.id);
+      if (p && !p.isConnected) {
+        // Still disconnected after grace period — remove
+        const { room: updatedRoom, tooFewPlayers } = removePlayer(socket.id);
+        if (updatedRoom) {
+          io.to(updatedRoom.id).emit('player:left', socket.id);
+          io.to(updatedRoom.id).emit('host:changed', updatedRoom.hostId);
+
+          if (tooFewPlayers) {
+            updatedRoom.gameState.phase = 'finished';
+            io.to(updatedRoom.id).emit('game:cancelled', 'not_enough_players');
+          } else {
+            io.to(updatedRoom.id).emit('room:updated', updatedRoom);
+          }
+        }
       }
-    }
+    }, 15000);
   });
 }
