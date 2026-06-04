@@ -208,8 +208,9 @@ export function Challenge({ lang, onBack }: ChallengeProps) {
           display: 'flex',
           gap: '12px',
           justifyContent: 'center',
-          flexWrap: 'wrap',
+          flexWrap: 'nowrap',
           padding: '8px 0',
+          overflowX: 'auto',
         }}>
           {cards.map((cardNum) => {
             const isThis = selected === cardNum;
@@ -247,8 +248,8 @@ export function Challenge({ lang, onBack }: ChallengeProps) {
                 onClick={() => handleSelect(cardNum)}
               >
                 <div style={{
-                  width: '220px',
-                  height: '310px',
+                  width: '180px',
+                  height: '254px',
                   borderRadius: '14px',
                   overflow: 'hidden',
                   border: `3px solid ${borderColor}`,
