@@ -236,8 +236,8 @@ export function Challenge({ lang, onBack }: ChallengeProps) {
                 onClick={() => handleSelect(cardNum)}
               >
                 <div style={{
-                  width: '140px',
-                  height: '198px',
+                  width: '170px',
+                  height: '240px',
                   borderRadius: '14px',
                   overflow: 'hidden',
                   border: `3px solid ${borderColor}`,
