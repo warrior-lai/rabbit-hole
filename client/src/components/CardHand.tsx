@@ -62,12 +62,6 @@ export function CardHand({ cards, selectedCard, onSelect, disabled }: CardHandPr
       {cards.map((cardId, index) => {
         const isSelected = selectedCard === cardId;
         const isHovered = hoveredCard === cardId;
-        // Fan effect: slight rotation based on position
-        const totalCards = cards.length;
-        const mid = (totalCards - 1) / 2;
-        const rotation = (index - mid) * 3;
-        const yOffset = Math.abs(index - mid) * 4;
-
         return (
           <div
             key={cardId}
@@ -76,11 +70,10 @@ export function CardHand({ cards, selectedCard, onSelect, disabled }: CardHandPr
             onMouseEnter={() => setHoveredCard(cardId)}
             onMouseLeave={() => setHoveredCard(null)}
             style={{
-              transform: `rotate(${isHovered ? 0 : rotation}deg) translateY(${isHovered ? -12 : isSelected ? -10 : yOffset}px)`,
+              transform: isHovered ? 'translateY(-8px) scale(1.03)' : isSelected ? 'translateY(-6px)' : 'none',
               cursor: disabled ? 'default' : 'pointer',
               opacity: disabled ? 0.5 : 1,
               transition: 'all 0.2s ease',
-              zIndex: isHovered ? 10 : index,
             }}
           >
             <img src={getCardImage(cardId)} alt="" draggable={false} />
