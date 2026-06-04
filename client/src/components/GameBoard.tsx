@@ -302,16 +302,24 @@ export function GameBoard({
               playerId={playerId}
             />
             <button
-              className="btn btn-accent"
               onClick={onNextRound}
               style={{
                 width: '100%',
                 marginTop: '20px',
                 fontSize: '16px',
-                padding: '16px',
+                padding: '16px 32px',
+                background: 'linear-gradient(135deg, #F7931A, #ff6b00)',
+                color: '#000',
+                border: 'none',
+                borderRadius: '50px',
+                fontFamily: 'inherit',
+                fontWeight: 700,
+                cursor: 'pointer',
+                letterSpacing: '1px',
+                boxShadow: '0 0 25px rgba(247,147,26,0.3)',
               }}
             >
-              ▶ {lang === 'es' ? 'Siguiente Ronda' : 'Next Round'}
+              ▶ {lang === 'es' ? 'SIGUIENTE RONDA' : 'NEXT ROUND'}
             </button>
           </div>
         )}
