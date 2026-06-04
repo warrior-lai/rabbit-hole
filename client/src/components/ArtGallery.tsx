@@ -255,7 +255,7 @@ export function ArtGallery({ lang, onClose }: ArtGalleryProps) {
             {/* Gallery view */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <h2 style={{ fontSize: '24px', fontWeight: 700 }}>
-                🎨 {lang === 'es' ? 'Mazos de Cartas' : 'Decks of Cards'}
+                🎨 {lang === 'es' ? 'Galería de Arte' : 'Art Gallery'}
               </h2>
               <button
                 onClick={onClose}
