@@ -180,7 +180,7 @@ export function Challenge({ lang, onBack }: ChallengeProps) {
           </p>
         </div>
 
-        {/* Result banner */}
+        {/* Result banner + next button */}
         {phase === 'result' && (
           <div className="fade-in" style={{
             width: '100%',
@@ -195,11 +195,17 @@ export function Challenge({ lang, onBack }: ChallengeProps) {
                 ? (lang === 'es' ? '✨ ¡Acertaste!' : '✨ You got it!')
                 : (lang === 'es' ? '✗ ¡Casi! Seguí intentando' : '✗ Almost! Keep trying')}
             </p>
-            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px', marginTop: '4px' }}>
-              {isCorrect
-                ? (lang === 'es' ? 'Esa era la carta correcta' : 'That was the correct card')
-                : (lang === 'es' ? 'No era esa, pero vas bien' : 'Not that one, but you\'re getting closer')}
-            </p>
+            <button
+              className="btn btn-accent"
+              onClick={newRound}
+              style={{
+                marginTop: '12px',
+                padding: '12px 32px',
+                fontSize: '14px',
+              }}
+            >
+              ▶ {lang === 'es' ? 'Siguiente Desafío' : 'Next Challenge'}
+            </button>
           </div>
         )}
 
@@ -305,22 +311,7 @@ export function Challenge({ lang, onBack }: ChallengeProps) {
 
 
 
-        {/* Next challenge button */}
-        {phase === 'result' && (
-          <button
-            className="btn btn-accent fade-in"
-            onClick={newRound}
-            style={{
-              width: '100%',
-              maxWidth: '400px',
-              fontSize: '16px',
-              padding: '18px',
-              marginTop: '8px',
-            }}
-          >
-            ▶ {lang === 'es' ? 'Siguiente Desafío' : 'Next Challenge'}
-          </button>
-        )}
+
       </div>
     </div>
   );
