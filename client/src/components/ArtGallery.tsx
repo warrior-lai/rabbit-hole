@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Language } from '@shared/types';
 import { getCardImage } from './CardHand';
 
@@ -144,13 +144,140 @@ function DeckPreview({ deck, onClick }: { deck: Deck; onClick: () => void }) {
   );
 }
 
+function CardLightbox({ cards, startIndex, onClose }: { cards: number[]; startIndex: number; onClose: () => void }) {
+  const [index, setIndex] = useState(startIndex);
+  const card = cards[index];
+
+  const prev = () => setIndex(i => i > 0 ? i - 1 : cards.length - 1);
+  const next = () => setIndex(i => i < cards.length - 1 ? i + 1 : 0);
+
+  // Keyboard nav
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') setIndex(i => i > 0 ? i - 1 : cards.length - 1);
+      if (e.key === 'ArrowRight') setIndex(i => i < cards.length - 1 ? i + 1 : 0);
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [cards.length, onClose]);
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0,0,0,0.92)',
+        zIndex: 3000,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '20px',
+      }}
+    >
+      {/* Close */}
+      <button
+        onClick={onClose}
+        style={{
+          position: 'absolute',
+          top: '16px', right: '16px',
+          background: 'rgba(255,255,255,0.1)',
+          border: 'none', color: '#fff',
+          width: '40px', height: '40px', borderRadius: '50%',
+          fontSize: '20px', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 3001,
+        }}
+      >✕</button>
+
+      {/* Prev */}
+      <button
+        onClick={(e) => { e.stopPropagation(); prev(); }}
+        style={{
+          position: 'absolute',
+          left: '16px',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          background: 'rgba(255,255,255,0.08)',
+          border: '1px solid rgba(255,255,255,0.15)',
+          color: '#fff',
+          width: '48px', height: '48px', borderRadius: '50%',
+          fontSize: '22px', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          transition: 'all 0.2s',
+          zIndex: 3001,
+        }}
+        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(247,147,26,0.2)'}
+        onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+      >‹</button>
+
+      {/* Card */}
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="fade-in"
+        style={{ textAlign: 'center' }}
+      >
+        <img
+          src={getCardImage(`card_${String(card).padStart(3, '0')}`)}
+          alt=""
+          style={{
+            maxHeight: '75vh',
+            maxWidth: '90vw',
+            borderRadius: '16px',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+          }}
+          draggable={false}
+        />
+        <p style={{
+          color: 'rgba(255,255,255,0.3)',
+          fontSize: '12px',
+          marginTop: '12px',
+        }}>
+          {index + 1} / {cards.length}
+        </p>
+      </div>
+
+      {/* Next */}
+      <button
+        onClick={(e) => { e.stopPropagation(); next(); }}
+        style={{
+          position: 'absolute',
+          right: '16px',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          background: 'rgba(255,255,255,0.08)',
+          border: '1px solid rgba(255,255,255,0.15)',
+          color: '#fff',
+          width: '48px', height: '48px', borderRadius: '50%',
+          fontSize: '22px', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          transition: 'all 0.2s',
+          zIndex: 3001,
+        }}
+        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(247,147,26,0.2)'}
+        onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+      >›</button>
+    </div>
+  );
+}
+
 function DeckDetail({ deck, lang, onBack }: { deck: Deck; lang: Language; onBack: () => void }) {
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+
   return (
     <div style={{
       display: 'flex',
       flexDirection: 'column',
       gap: '16px',
     }}>
+      {lightboxIndex !== null && (
+        <CardLightbox
+          cards={deck.cards}
+          startIndex={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+        />
+      )}
       {/* Header */}
       <div style={{
         display: 'flex',
@@ -227,6 +354,7 @@ function DeckDetail({ deck, lang, onBack }: { deck: Deck; lang: Language; onBack
               e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)';
               e.currentTarget.style.boxShadow = 'none';
             }}
+            onClick={() => setLightboxIndex(deck.cards.indexOf(num))}
             draggable={false}
           />
         ))}
