@@ -77,11 +77,24 @@ export function Profile({ lang, profile, onClose }: ProfileProps) {
           boxShadow: '0 24px 80px rgba(0,0,0,0.4)',
         }}
       >
-        {/* Header */}
+        {/* Header with avatar */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-          <h2 style={{ fontSize: '22px', fontWeight: 700 }}>
-            🐇 {profile.name || (lang === 'es' ? 'Perfil' : 'Profile')}
-          </h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {localStorage.getItem('rh-nostr-picture') ? (
+              <img
+                src={localStorage.getItem('rh-nostr-picture')!}
+                alt=""
+                style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(247,147,26,0.3)' }}
+              />
+            ) : (
+              <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: 'rgba(247,147,26,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px' }}>
+                🐇
+              </div>
+            )}
+            <h2 style={{ fontSize: '20px', fontWeight: 700 }}>
+              {profile.name || (lang === 'es' ? 'Perfil' : 'Profile')}
+            </h2>
+          </div>
           <button
             onClick={onClose}
             style={{

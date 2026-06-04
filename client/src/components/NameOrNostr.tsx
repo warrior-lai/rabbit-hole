@@ -1,16 +1,22 @@
 import { useState } from 'react';
 import type { Language } from '@shared/types';
+import { fetchNostrProfile } from '../hooks/useNostrProfile';
 
 interface NameOrNostrProps {
   lang: Language;
   onSubmitName: (name: string) => void;
-  onNostrLogin: (name: string, npub: string) => void;
+  onNostrLogin: (name: string, npub: string, picture?: string) => void;
 }
 
 export function NameOrNostr({ lang, onSubmitName, onNostrLogin }: NameOrNostrProps) {
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Check for saved Nostr session
+  const savedNpub = localStorage.getItem('rh-nostr-npub');
+  const savedName = localStorage.getItem('rh-nostr-name');
+  const savedPicture = localStorage.getItem('rh-nostr-picture') || undefined;
 
   const handleNostr = async () => {
     const nostr = (window as any).nostr;
@@ -26,11 +32,16 @@ export function NameOrNostr({ lang, onSubmitName, onNostrLogin }: NameOrNostrPro
     setLoading(true);
     try {
       const pubkey = await nostr.getPublicKey();
-      const shortName = `nostr:${pubkey.substring(0, 8)}`;
-      // Persist Nostr session
+
+      // Fetch profile from relays
+      const profile = await fetchNostrProfile(pubkey);
+
+      // Persist session
       localStorage.setItem('rh-nostr-npub', pubkey);
-      localStorage.setItem('rh-nostr-name', shortName);
-      onNostrLogin(shortName, pubkey);
+      localStorage.setItem('rh-nostr-name', profile.name);
+      if (profile.picture) localStorage.setItem('rh-nostr-picture', profile.picture);
+
+      onNostrLogin(profile.name, pubkey, profile.picture);
     } catch {
       setError(lang === 'en' ? 'Connection failed' : 'Error al conectar');
       setTimeout(() => setError(''), 3000);
@@ -38,9 +49,11 @@ export function NameOrNostr({ lang, onSubmitName, onNostrLogin }: NameOrNostrPro
     setLoading(false);
   };
 
-  // Auto-restore Nostr session
-  const savedNpub = localStorage.getItem('rh-nostr-npub');
-  const savedName = localStorage.getItem('rh-nostr-name');
+  const handleSavedNostr = () => {
+    if (savedNpub && savedName) {
+      onNostrLogin(savedName, savedNpub, savedPicture);
+    }
+  };
 
   return (
     <div style={{
@@ -103,18 +116,31 @@ export function NameOrNostr({ lang, onSubmitName, onNostrLogin }: NameOrNostrPro
         {lang === 'en' ? 'or' : 'o'}
       </div>
 
-      {/* Nostr login */}
+      {/* Saved Nostr session */}
       {savedNpub && savedName ? (
         <button
           className="btn btn-primary"
-          onClick={() => onNostrLogin(savedName, savedNpub)}
+          onClick={handleSavedNostr}
           style={{
             width: '100%',
-            background: 'rgba(139, 92, 246, 0.2)',
-            borderColor: 'rgba(139, 92, 246, 0.3)',
+            background: 'rgba(139, 92, 246, 0.15)',
+            borderColor: 'rgba(139, 92, 246, 0.25)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '10px',
           }}
         >
-          🔑 {savedName}
+          {savedPicture ? (
+            <img
+              src={savedPicture}
+              alt=""
+              style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'cover' }}
+            />
+          ) : (
+            <span>🔑</span>
+          )}
+          {savedName}
         </button>
       ) : (
         <button
@@ -123,8 +149,8 @@ export function NameOrNostr({ lang, onSubmitName, onNostrLogin }: NameOrNostrPro
           disabled={loading}
           style={{
             width: '100%',
-            background: 'rgba(139, 92, 246, 0.2)',
-            borderColor: 'rgba(139, 92, 246, 0.3)',
+            background: 'rgba(139, 92, 246, 0.15)',
+            borderColor: 'rgba(139, 92, 246, 0.25)',
           }}
         >
           {loading ? '⏳' : '🔑'} {lang === 'en' ? 'Connect with Nostr' : 'Conectar con Nostr'}
