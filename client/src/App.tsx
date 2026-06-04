@@ -5,10 +5,11 @@ import { Landing } from './pages/Landing';
 import { Lobby } from './pages/Lobby';
 import { GameBoard } from './components/GameBoard';
 import { GameOver } from './components/GameOver';
+import { Challenge } from './components/Challenge';
 import { GameCancelled } from './components/GameCancelled';
 import type { Room, GameState, PlayerProfile, LeaderboardEntry } from '@shared/types';
 
-type Screen = 'landing' | 'lobby' | 'game' | 'results' | 'cancelled';
+type Screen = 'landing' | 'lobby' | 'game' | 'results' | 'cancelled' | 'challenge';
 
 export function App() {
   const { lang, t, toggleLang } = useLanguage();
@@ -220,6 +221,7 @@ export function App() {
           t={t} lang={lang} toggleLang={toggleLang}
           onQuickPlay={(name: string, npub?: string) => handleQuickPlay(name, npub)}
           onJoinRoom={(name: string, code: string, npub?: string) => handleJoinRoom(name, code, npub)}
+          onChallenge={() => setScreen('challenge')}
           profile={profile}
           leaderboard={leaderboard}
           onRequestProfile={() => socket?.emit('profile:get', { statsId })}
@@ -255,6 +257,13 @@ export function App() {
           players={gameState.players}
           onPlayAgain={handlePlayAgain}
           onBackToLobby={handleBackToLobby}
+        />
+      )}
+
+      {screen === 'challenge' && (
+        <Challenge
+          lang={lang}
+          onBack={() => setScreen('landing')}
         />
       )}
 

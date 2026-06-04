@@ -11,6 +11,7 @@ interface LandingProps {
   toggleLang: () => void;
   onQuickPlay: (name: string, npub?: string) => void;
   onJoinRoom: (name: string, code: string, npub?: string) => void;
+  onChallenge: () => void;
   profile: PlayerProfile | null;
   leaderboard: LeaderboardEntry[];
   onRequestProfile: () => void;
@@ -19,7 +20,7 @@ interface LandingProps {
 
 type Mode = 'home' | 'create-identity' | 'join-identity' | 'join-code';
 
-export function Landing({ t, lang, toggleLang, onQuickPlay, onJoinRoom, profile, leaderboard, onRequestProfile, onRequestLeaderboard }: LandingProps) {
+export function Landing({ t, lang, toggleLang, onQuickPlay, onJoinRoom, onChallenge, profile, leaderboard, onRequestProfile, onRequestLeaderboard }: LandingProps) {
   const [mode, setMode] = useState<Mode>('home');
   const [showRules, setShowRules] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
@@ -120,9 +121,10 @@ export function Landing({ t, lang, toggleLang, onQuickPlay, onJoinRoom, profile,
             gap: '10px',
             animation: 'fadeInUp 0.5s ease',
           }}>
+            {/* Challenge - solo mode */}
             <button
               className="btn btn-accent"
-              onClick={() => setMode('create-identity')}
+              onClick={onChallenge}
               style={{
                 width: '100%',
                 fontSize: '16px',
@@ -130,13 +132,23 @@ export function Landing({ t, lang, toggleLang, onQuickPlay, onJoinRoom, profile,
                 boxShadow: '0 0 30px rgba(247,147,26,0.2)',
               }}
             >
-              ⚡ {t('createRoom')}
+              🎯 {lang === 'en' ? 'Challenge' : 'Desafío'}
             </button>
 
-            <div className="divider" style={{ margin: '4px 0' }}>{t('or')}</div>
+            <div className="divider" style={{ margin: '4px 0' }}>
+              {lang === 'en' ? 'multiplayer' : 'multijugador'}
+            </div>
 
             <button
               className="btn btn-primary"
+              onClick={() => setMode('create-identity')}
+              style={{ width: '100%' }}
+            >
+              ⚡ {t('createRoom')}
+            </button>
+
+            <button
+              className="btn btn-secondary"
               onClick={() => setMode('join-identity')}
               style={{ width: '100%' }}
             >
