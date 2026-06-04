@@ -154,6 +154,47 @@ export function Profile({ lang, profile, onClose }: ProfileProps) {
           ))}
         </div>
 
+        {/* Won cards collection */}
+        {(() => {
+          const wonCards: number[] = JSON.parse(localStorage.getItem('rh-won-cards') || '[]');
+          if (wonCards.length === 0) return null;
+          return (
+            <div style={{ marginTop: '16px' }}>
+              <p style={{
+                fontSize: '10px',
+                color: 'rgba(255,255,255,0.3)',
+                letterSpacing: '2px',
+                textTransform: 'uppercase',
+                marginBottom: '8px',
+                textAlign: 'center',
+              }}>
+                {lang === 'es' ? `Cartas ganadas (${wonCards.length})` : `Cards won (${wonCards.length})`}
+              </p>
+              <div style={{
+                display: 'flex',
+                gap: '6px',
+                flexWrap: 'wrap',
+                justifyContent: 'center',
+              }}>
+                {wonCards.map((num) => (
+                  <img
+                    key={num}
+                    src={`/cards/card_${String(num).padStart(3, '0')}.jpg`}
+                    alt=""
+                    style={{
+                      width: '52px',
+                      height: '73px',
+                      borderRadius: '6px',
+                      objectFit: 'cover',
+                      border: '1px solid rgba(247,147,26,0.3)',
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          );
+        })()}
+
         <button
           className="btn btn-primary"
           onClick={onClose}

@@ -84,10 +84,17 @@ export function Challenge({ lang, onBack }: ChallengeProps) {
     setSelected(cardNum);
     setPhase('result');
 
-    // Track challenge wins
+    // Track challenge wins + save winning card
     if (cardNum === correctCard) {
       const wins = parseInt(localStorage.getItem('rh-challenges-won') || '0');
       localStorage.setItem('rh-challenges-won', String(wins + 1));
+      
+      // Save won cards collection
+      const wonCards: number[] = JSON.parse(localStorage.getItem('rh-won-cards') || '[]');
+      if (!wonCards.includes(cardNum)) {
+        wonCards.push(cardNum);
+        localStorage.setItem('rh-won-cards', JSON.stringify(wonCards));
+      }
     }
 
     if (cardNum === correctCard) {
