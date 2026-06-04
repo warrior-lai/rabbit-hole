@@ -101,6 +101,23 @@ export function setupSocketHandlers(io: TypedServer, socket: TypedSocket): void 
         io.to(room.id).emit('game:round-result', lastResult);
         io.to(room.id).emit('game:phase-changed', 'scoring');
 
+        // Save stats after each round
+        room.gameState.players.forEach(p => {
+          const r = lastResult;
+          let correct = 0, total = 0, deceived = 0;
+          if (p.id !== r.storytellerId) {
+            total = 1;
+            const voted = r.votes.find(v => v.voterId === p.id);
+            if (voted && voted.cardId === r.storytellerCardId) correct = 1;
+          }
+          const playerCard = r.playedCards.find(c => c.playerId === p.id);
+          if (playerCard && p.id !== r.storytellerId) {
+            deceived = r.votes.filter(v => v.cardId === playerCard.cardId).length;
+          }
+          const roundPoints = r.scores.filter(s => s.playerId === p.id).reduce((sum, s) => sum + s.points, 0);
+          updateStats(p.id, p.name, roundPoints, false, correct, total, deceived, p.npub);
+        });
+
         // Don't auto-advance — wait for host to click 'Next Round'
       } else {
         io.to(room.id).emit('room:updated', room);
@@ -120,23 +137,21 @@ export function setupSocketHandlers(io: TypedServer, socket: TypedSocket): void 
       room.gameState = nextRound(room.gameState);
 
       if (room.gameState.phase === 'finished') {
-        // Save stats
+        // Mark winner (stats already saved per round)
         const sorted = [...room.gameState.players].sort((a, b) => b.score - a.score);
         const winnerId = sorted[0]?.id;
+        if (winnerId) {
+          const stats = getStats(winnerId);
+          if (stats) {
+            stats.gamesWon++;
+          }
+        }
+        // Mark games played for all
         room.gameState.players.forEach(p => {
-          let correct = 0, total = 0, deceived = 0;
-          room.gameState.roundResults.forEach(r => {
-            if (p.id !== r.storytellerId) {
-              total++;
-              const voted = r.votes.find(v => v.voterId === p.id);
-              if (voted && voted.cardId === r.storytellerCardId) correct++;
-            }
-            const playerCard = r.playedCards.find(c => c.playerId === p.id);
-            if (playerCard && p.id !== r.storytellerId) {
-              deceived += r.votes.filter(v => v.cardId === playerCard.cardId).length;
-            }
-          });
-          updateStats(p.id, p.name, p.score, p.id === winnerId, correct, total, deceived, p.npub);
+          const stats = getStats(p.id);
+          if (stats) {
+            stats.gamesPlayed++;
+          }
         });
 
         const finalScores = room.gameState.players.map(p => ({
@@ -165,23 +180,16 @@ export function setupSocketHandlers(io: TypedServer, socket: TypedSocket): void 
 
       room.gameState.phase = 'finished';
 
-      // Save stats
+      // Mark winner + games played (round stats already saved)
       const sorted = [...room.gameState.players].sort((a, b) => b.score - a.score);
       const winnerId = sorted[0]?.id;
+      if (winnerId) {
+        const winnerStats = getStats(winnerId);
+        if (winnerStats) winnerStats.gamesWon++;
+      }
       room.gameState.players.forEach(p => {
-        let correct = 0, total = 0, deceived = 0;
-        room.gameState.roundResults.forEach(r => {
-          if (p.id !== r.storytellerId) {
-            total++;
-            const voted = r.votes.find(v => v.voterId === p.id);
-            if (voted && voted.cardId === r.storytellerCardId) correct++;
-          }
-          const playerCard = r.playedCards.find(c => c.playerId === p.id);
-          if (playerCard && p.id !== r.storytellerId) {
-            deceived += r.votes.filter(v => v.cardId === playerCard.cardId).length;
-          }
-        });
-        updateStats(p.id, p.name, p.score, p.id === winnerId, correct, total, deceived, p.npub);
+        const s = getStats(p.id);
+        if (s) s.gamesPlayed++;
       });
 
       const finalScores = room.gameState.players.map(p => ({
