@@ -34,6 +34,8 @@ const clues = {
 
 const TOTAL_CARDS = 27;
 
+const CARDS_PER_CHALLENGE = 5;
+
 function getRandomCards(count: number): number[] {
   const all = Array.from({ length: TOTAL_CARDS }, (_, i) => i + 1);
   for (let i = all.length - 1; i > 0; i--) {
@@ -62,7 +64,7 @@ export function Challenge({ lang, onBack }: ChallengeProps) {
   const [round, setRound] = useState(0);
 
   const newRound = useCallback(() => {
-    const newCards = getRandomCards(4);
+    const newCards = getRandomCards(CARDS_PER_CHALLENGE);
     const correct = newCards[Math.floor(Math.random() * 4)];
     const newClue = getRandomClue(lang, usedClues);
     usedClues.add(newClue);
