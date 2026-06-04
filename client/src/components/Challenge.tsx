@@ -182,12 +182,12 @@ export function Challenge({ lang, onBack }: ChallengeProps) {
             <p style={{ fontSize: '18px', fontWeight: 700, color: isCorrect ? '#2ecc71' : '#e74c3c' }}>
               {isCorrect
                 ? (lang === 'es' ? '✨ ¡Acertaste!' : '✨ You got it!')
-                : (lang === 'es' ? '✗ ¡Te engañaron!' : '✗ You were fooled!')}
+                : (lang === 'es' ? '✗ ¡Casi! Seguí intentando' : '✗ Almost! Keep trying')}
             </p>
             <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px', marginTop: '4px' }}>
               {isCorrect
                 ? (lang === 'es' ? 'Esa era la carta correcta' : 'That was the correct card')
-                : (lang === 'es' ? 'Esa no era la carta correcta' : 'That was not the correct card')}
+                : (lang === 'es' ? 'No era esa, pero vas bien' : 'Not that one, but you\'re getting closer')}
             </p>
           </div>
         )}
