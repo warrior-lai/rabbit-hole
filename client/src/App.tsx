@@ -146,6 +146,17 @@ export function App() {
     socket?.emit('game:start');
   }, [socket]);
 
+  const handleLeaveGame = useCallback(() => {
+    // Disconnect and go back to landing
+    socket?.disconnect();
+    socket?.connect();
+    setScreen('landing');
+    setRoom(null);
+    setGameState(null);
+    setMyHand([]);
+    setRevealedCards([]);
+  }, [socket]);
+
   const handleBackToLobby = useCallback(() => {
     setScreen('landing');
     setRoom(null);
@@ -234,6 +245,7 @@ export function App() {
           onPlayCard={handlePlayCard}
           onVote={handleVote}
           onNextRound={handleNextRound}
+          onLeaveGame={handleLeaveGame}
         />
       )}
 

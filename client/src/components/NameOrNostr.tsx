@@ -26,8 +26,10 @@ export function NameOrNostr({ lang, onSubmitName, onNostrLogin }: NameOrNostrPro
     setLoading(true);
     try {
       const pubkey = await nostr.getPublicKey();
-      // Use first 8 chars of npub as display name
       const shortName = `nostr:${pubkey.substring(0, 8)}`;
+      // Persist Nostr session
+      localStorage.setItem('rh-nostr-npub', pubkey);
+      localStorage.setItem('rh-nostr-name', shortName);
       onNostrLogin(shortName, pubkey);
     } catch {
       setError(lang === 'en' ? 'Connection failed' : 'Error al conectar');
@@ -35,6 +37,10 @@ export function NameOrNostr({ lang, onSubmitName, onNostrLogin }: NameOrNostrPro
     }
     setLoading(false);
   };
+
+  // Auto-restore Nostr session
+  const savedNpub = localStorage.getItem('rh-nostr-npub');
+  const savedName = localStorage.getItem('rh-nostr-name');
 
   return (
     <div style={{
@@ -98,18 +104,32 @@ export function NameOrNostr({ lang, onSubmitName, onNostrLogin }: NameOrNostrPro
       </div>
 
       {/* Nostr login */}
-      <button
-        className="btn btn-primary"
-        onClick={handleNostr}
-        disabled={loading}
-        style={{
-          width: '100%',
-          background: 'rgba(139, 92, 246, 0.2)',
-          borderColor: 'rgba(139, 92, 246, 0.3)',
-        }}
-      >
-        {loading ? '⏳' : '🔑'} {lang === 'en' ? 'Connect with Nostr' : 'Conectar con Nostr'}
-      </button>
+      {savedNpub && savedName ? (
+        <button
+          className="btn btn-primary"
+          onClick={() => onNostrLogin(savedName, savedNpub)}
+          style={{
+            width: '100%',
+            background: 'rgba(139, 92, 246, 0.2)',
+            borderColor: 'rgba(139, 92, 246, 0.3)',
+          }}
+        >
+          🔑 {savedName}
+        </button>
+      ) : (
+        <button
+          className="btn btn-primary"
+          onClick={handleNostr}
+          disabled={loading}
+          style={{
+            width: '100%',
+            background: 'rgba(139, 92, 246, 0.2)',
+            borderColor: 'rgba(139, 92, 246, 0.3)',
+          }}
+        >
+          {loading ? '⏳' : '🔑'} {lang === 'en' ? 'Connect with Nostr' : 'Conectar con Nostr'}
+        </button>
+      )}
 
       {error && (
         <p style={{

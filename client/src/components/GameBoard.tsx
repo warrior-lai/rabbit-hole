@@ -17,6 +17,7 @@ interface GameBoardProps {
   onPlayCard: (cardId: string) => void;
   onVote: (cardId: string) => void;
   onNextRound: () => void;
+  onLeaveGame: () => void;
 }
 
 const TURN_SECONDS = 30;
@@ -24,7 +25,7 @@ const VOTE_SECONDS = 30;
 
 export function GameBoard({
   t, gameState, playerId, myHand, revealedCards,
-  onSubmitClue, onPlayCard, onVote, onNextRound
+  onSubmitClue, onPlayCard, onVote, onNextRound, onLeaveGame
 }: GameBoardProps) {
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
   const [clue, setClue] = useState('');
@@ -75,7 +76,13 @@ export function GameBoard({
         border: '1px solid rgba(255,255,255,0.05)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '18px' }}>🐇</span>
+          <span
+            style={{ fontSize: '18px', cursor: 'pointer', transition: 'transform 0.3s' }}
+            onClick={onLeaveGame}
+            onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.3) rotate(-10deg)'}
+            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            title={lang === 'es' ? 'Abandonar juego' : 'Leave game'}
+          >🐇</span>
           <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '12px' }}>
             {lang === 'es' ? 'Ronda' : 'Round'}
           </span>
@@ -186,13 +193,33 @@ export function GameBoard({
           </div>
         )}
 
-        {/* STORYTELLING: Others wait */}
+        {/* STORYTELLING: Others wait — interactive rabbit */}
         {gameState.phase === 'storytelling' && !isStoryteller && (
-          <div className="fade-in" style={{ textAlign: 'center', paddingTop: '32px' }}>
-            <div className="pulse" style={{
-              fontSize: '64px',
-              filter: 'drop-shadow(0 0 20px rgba(247,147,26,0.3))',
-            }}>🎭</div>
+          <div className="fade-in" style={{ textAlign: 'center', paddingTop: '24px' }}>
+            <div style={{
+              fontSize: '80px',
+              filter: 'drop-shadow(0 0 30px rgba(247,147,26,0.4))',
+              animation: 'rabbitFloat 4s ease-in-out infinite',
+              cursor: 'pointer',
+              userSelect: 'none',
+            }}
+              onClick={(e) => {
+                e.currentTarget.style.animation = 'none';
+                e.currentTarget.style.transform = 'scale(1.3) rotate(15deg)';
+                setTimeout(() => {
+                  e.currentTarget.style.transform = '';
+                  e.currentTarget.style.animation = 'rabbitFloat 4s ease-in-out infinite';
+                }, 400);
+              }}
+            >🐇</div>
+            <style>{`
+              @keyframes rabbitFloat {
+                0%, 100% { transform: translateY(0) rotate(0deg); }
+                25% { transform: translateY(-12px) rotate(-3deg); }
+                50% { transform: translateY(-4px) rotate(0deg); }
+                75% { transform: translateY(-16px) rotate(3deg); }
+              }
+            `}</style>
           </div>
         )}
 
@@ -295,6 +322,26 @@ export function GameBoard({
         borderTop: '1px solid rgba(255,255,255,0.05)',
       }}>
         <Scoreboard players={gameState.players} currentStorytellerId={gameState.currentStorytellerId} />
+        <button
+          onClick={onLeaveGame}
+          style={{
+            width: '100%',
+            marginTop: '8px',
+            padding: '10px',
+            background: 'none',
+            border: '1px solid rgba(231,76,60,0.2)',
+            borderRadius: '10px',
+            color: 'rgba(231,76,60,0.5)',
+            fontSize: '11px',
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+            transition: 'all 0.2s',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(231,76,60,0.5)'; e.currentTarget.style.color = '#e74c3c'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(231,76,60,0.2)'; e.currentTarget.style.color = 'rgba(231,76,60,0.5)'; }}
+        >
+          🚪 {lang === 'es' ? 'Abandonar Juego' : 'Leave Game'}
+        </button>
       </div>
     </div>
   );
