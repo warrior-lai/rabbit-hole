@@ -160,32 +160,48 @@ function DeckDetail({ deck, lang, onBack }: { deck: Deck; lang: Language; onBack
         <button
           onClick={onBack}
           style={{
-            background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)',
+            background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
+            color: 'rgba(255,255,255,0.6)',
             fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit',
+            padding: '8px 16px', borderRadius: '20px',
+            transition: 'all 0.2s',
           }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(247,147,26,0.3)'; e.currentTarget.style.color = '#fff'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = 'rgba(255,255,255,0.6)'; }}
         >
           ← {lang === 'es' ? 'Volver' : 'Back'}
         </button>
+        <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.3)' }}>
+          {deck.cardCount} {lang === 'es' ? 'cartas' : 'cards'}
+        </span>
       </div>
 
-      {/* Deck title */}
-      <div style={{ textAlign: 'center' }}>
-        <h2 style={{ fontSize: '24px', fontWeight: 700, color: '#F7931A', marginBottom: '4px' }}>
+      {/* Deck title + artist prominent */}
+      <div style={{ textAlign: 'center', paddingBottom: '8px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <h2 style={{ fontSize: '28px', fontWeight: 700, color: '#fff', marginBottom: '8px' }}>
           {deck.name}
         </h2>
-        <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)' }}>
-          {lang === 'es' ? 'Artista' : 'Artist'}: <span style={{ color: '#fff', fontWeight: 600 }}>{deck.artist}</span>
-        </p>
-        <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', marginTop: '2px' }}>
-          {deck.cardCount} {lang === 'es' ? 'cartas' : 'cards'}
-        </p>
+        <div style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '8px',
+          background: 'rgba(247,147,26,0.1)',
+          border: '1px solid rgba(247,147,26,0.2)',
+          padding: '8px 20px',
+          borderRadius: '30px',
+        }}>
+          <span style={{ fontSize: '14px' }}>✨</span>
+          <span style={{ fontSize: '15px', color: '#F7931A', fontWeight: 700, letterSpacing: '0.5px' }}>
+            {lang === 'es' ? 'Artista' : 'Artist'}: {deck.artist}
+          </span>
+        </div>
       </div>
 
-      {/* All cards grid */}
+      {/* All cards grid — big cards */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
-        gap: '8px',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+        gap: '12px',
       }}>
         {deck.cards.map((num) => (
           <img
@@ -195,19 +211,21 @@ function DeckDetail({ deck, lang, onBack }: { deck: Deck; lang: Language; onBack
             style={{
               width: '100%',
               aspectRatio: '5/7',
-              borderRadius: '10px',
+              borderRadius: '12px',
               objectFit: 'cover',
-              border: '1px solid rgba(255,255,255,0.08)',
-              transition: 'transform 0.2s, border-color 0.2s',
+              border: '2px solid rgba(255,255,255,0.06)',
+              transition: 'transform 0.25s, border-color 0.25s, box-shadow 0.25s',
               cursor: 'pointer',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'scale(1.06)';
+              e.currentTarget.style.transform = 'scale(1.05)';
               e.currentTarget.style.borderColor = 'rgba(247,147,26,0.4)';
+              e.currentTarget.style.boxShadow = '0 8px 30px rgba(247,147,26,0.15)';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = 'scale(1)';
-              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
+              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)';
+              e.currentTarget.style.boxShadow = 'none';
             }}
             draggable={false}
           />
@@ -242,7 +260,7 @@ export function ArtGallery({ lang, onClose }: ArtGalleryProps) {
           border: '1px solid rgba(255,255,255,0.1)',
           borderRadius: '24px',
           padding: '28px',
-          maxWidth: '640px',
+          maxWidth: selectedDeck ? '900px' : '640px',
           width: '100%',
           maxHeight: '85vh',
           overflowY: 'auto',
