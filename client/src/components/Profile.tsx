@@ -43,9 +43,9 @@ export function Profile({ lang, profile, onClose }: ProfileProps) {
       sub: `${guessRate}%`,
     },
     {
-      icon: '🎩',
-      label: lang === 'es' ? 'Engañó jugadores' : 'Fooled Players',
-      value: profile.timesDeceived,
+      icon: '🎯',
+      label: lang === 'es' ? 'Desafíos' : 'Challenges',
+      value: parseInt(localStorage.getItem('rh-challenges') || '0'),
     },
   ];
 
