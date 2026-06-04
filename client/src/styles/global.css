@@ -260,9 +260,9 @@ body {
 
 /* ===== Game Cards ===== */
 .game-card {
-  width: 180px;
-  height: 254px;
-  border-radius: 14px;
+  width: 220px;
+  height: 310px;
+  border-radius: 16px;
   overflow: hidden;
   cursor: pointer;
   transition: all 0.25s ease;
@@ -404,17 +404,17 @@ body {
 /* ===== Responsive ===== */
 @media (min-width: 768px) {
   .game-card {
-    width: 200px;
-    height: 283px;
-    border-radius: 16px;
+    width: 240px;
+    height: 340px;
+    border-radius: 18px;
   }
 }
 
 @media (max-width: 480px) {
   .game-card {
-    width: 150px;
-    height: 212px;
-    border-radius: 12px;
+    width: 170px;
+    height: 240px;
+    border-radius: 14px;
   }
   .btn {
     padding: 14px 24px;
