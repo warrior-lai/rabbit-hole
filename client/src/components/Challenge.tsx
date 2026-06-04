@@ -2,53 +2,11 @@ import { useState, useEffect, useCallback } from 'react';
 import type { Language } from '@shared/types';
 import { getCardImage } from './CardHand';
 import confetti from 'canvas-confetti';
+import { generateChallenge } from '../game/challengeData';
 
 interface ChallengeProps {
   lang: Language;
   onBack: () => void;
-}
-
-// Clues pool — EN and ES
-const clues = {
-  en: [
-    'Freedom', 'Down the rabbit hole', 'Trust no one', 'Digital gold', 'The matrix',
-    'Decentralization', 'Proof of work', 'Satoshi', 'Lightning', 'The citadel',
-    'HODL', 'Sovereignty', 'Time preference', 'Sound money', 'Exit the system',
-    'Inflation', 'Scarcity', 'Genesis block', 'Trustless', 'The red pill',
-    'Full node', 'Peer to peer', 'Cypherpunk', 'Private keys', 'Not your keys',
-    'Consensus', 'Hash rate', 'Moon', 'Bear market', 'Bull run',
-    'Volatility', 'Revolution', 'Censorship resistant', 'Open source', 'Permissionless',
-    'Unconfiscatable', 'Fix the money', 'Number go up', 'Stack sats', 'Stay humble',
-  ],
-  es: [
-    'Libertad', 'La madriguera', 'No confíes en nadie', 'Oro digital', 'La matrix',
-    'Descentralización', 'Prueba de trabajo', 'Satoshi', 'Relámpago', 'La ciudadela',
-    'HODL', 'Soberanía', 'Preferencia temporal', 'Dinero sano', 'Salí del sistema',
-    'Inflación', 'Escasez', 'Bloque génesis', 'Sin confianza', 'La pastilla roja',
-    'Nodo completo', 'Persona a persona', 'Cypherpunk', 'Llaves privadas', 'Sin tus llaves',
-    'Consenso', 'Poder de hash', 'Luna', 'Mercado bajista', 'Corrida alcista',
-    'Volatilidad', 'Revolución', 'Resistente a censura', 'Código abierto', 'Sin permisos',
-    'Inconfiscable', 'Arreglá el dinero', 'El número sube', 'Apilá sats', 'Sé humilde',
-  ],
-};
-
-const TOTAL_CARDS = 31;
-
-const CARDS_PER_CHALLENGE = 5;
-
-function getRandomCards(count: number): number[] {
-  const all = Array.from({ length: TOTAL_CARDS }, (_, i) => i + 1);
-  for (let i = all.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [all[i], all[j]] = [all[j], all[i]];
-  }
-  return all.slice(0, count);
-}
-
-function getRandomClue(lang: Language, usedClues: Set<string>): string {
-  const pool = clues[lang].filter(c => !usedClues.has(c));
-  if (pool.length === 0) return clues[lang][Math.floor(Math.random() * clues[lang].length)];
-  return pool[Math.floor(Math.random() * pool.length)];
 }
 
 type Phase = 'picking' | 'result';
@@ -59,23 +17,20 @@ export function Challenge({ lang, onBack }: ChallengeProps) {
   const [clue, setClue] = useState('');
   const [selected, setSelected] = useState<number | null>(null);
   const [phase, setPhase] = useState<Phase>('picking');
-  const [streak, setStreak] = useState(0);
-  const [usedClues] = useState(() => new Set<string>());
+  const [usedClueIndices] = useState(() => new Set<number>());
   const [round, setRound] = useState(0);
 
   const newRound = useCallback(() => {
-    const newCards = getRandomCards(CARDS_PER_CHALLENGE);
-    const correct = newCards[Math.floor(Math.random() * 4)];
-    const newClue = getRandomClue(lang, usedClues);
-    usedClues.add(newClue);
+    const challenge = generateChallenge(lang, usedClueIndices);
+    usedClueIndices.add(challenge.clueIndex);
 
-    setCards(newCards);
-    setCorrectCard(correct);
-    setClue(newClue);
+    setCards(challenge.cards);
+    setCorrectCard(challenge.correctCard);
+    setClue(challenge.clueText);
     setSelected(null);
     setPhase('picking');
     setRound(r => r + 1);
-  }, [lang, usedClues]);
+  }, [lang, usedClueIndices]);
 
   useEffect(() => {
     newRound();
@@ -90,17 +45,14 @@ export function Challenge({ lang, onBack }: ChallengeProps) {
     if (cardNum === correctCard) {
       const wins = parseInt(localStorage.getItem('rh-challenges-won') || '0');
       localStorage.setItem('rh-challenges-won', String(wins + 1));
-      
+
       // Save won cards collection
       const wonCards: number[] = JSON.parse(localStorage.getItem('rh-won-cards') || '[]');
       if (!wonCards.includes(cardNum)) {
         wonCards.push(cardNum);
         localStorage.setItem('rh-won-cards', JSON.stringify(wonCards));
       }
-    }
 
-    if (cardNum === correctCard) {
-      setStreak(s => s + 1);
       // Confetti on correct!
       setTimeout(() => {
         confetti({
@@ -110,8 +62,6 @@ export function Challenge({ lang, onBack }: ChallengeProps) {
           colors: ['#F7931A', '#ffaa00', '#2ecc71', '#fff'],
         });
       }, 300);
-    } else {
-      setStreak(0);
     }
   };
 
@@ -308,10 +258,6 @@ export function Challenge({ lang, onBack }: ChallengeProps) {
             );
           })}
         </div>
-
-
-
-
       </div>
     </div>
   );
