@@ -141,9 +141,17 @@ export function Challenge({ lang, onBack }: ChallengeProps) {
           >
             ← {lang === 'es' ? 'Volver' : 'Back'}
           </button>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '14px' }}>🔥</span>
-            <span style={{ color: '#F7931A', fontWeight: 700, fontSize: '16px' }}>{streak}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span style={{ fontSize: '14px' }}>🔥</span>
+              <span style={{ color: '#F7931A', fontWeight: 700, fontSize: '16px' }}>{streak}</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span style={{ fontSize: '14px' }}>⚡</span>
+              <span style={{ color: 'rgba(255,255,255,0.6)', fontWeight: 700, fontSize: '16px' }}>
+                {parseInt(localStorage.getItem('rh-challenges-won') || '0')}
+              </span>
+            </div>
           </div>
         </div>
 
