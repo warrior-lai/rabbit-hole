@@ -7,7 +7,7 @@ interface ArtGalleryProps {
   onClose: () => void;
 }
 
-const TOTAL_CARDS = 31;
+const TOTAL_CARDS = 34;
 
 interface Deck {
   id: string;
