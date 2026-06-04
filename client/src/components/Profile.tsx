@@ -44,8 +44,8 @@ export function Profile({ lang, profile, onClose }: ProfileProps) {
     },
     {
       icon: '🎯',
-      label: lang === 'es' ? 'Desafíos' : 'Challenges',
-      value: parseInt(localStorage.getItem('rh-challenges') || '0'),
+      label: lang === 'es' ? 'Desafíos ganados' : 'Challenges Won',
+      value: parseInt(localStorage.getItem('rh-challenges-won') || '0'),
     },
   ];
 

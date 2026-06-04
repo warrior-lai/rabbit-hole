@@ -84,9 +84,11 @@ export function Challenge({ lang, onBack }: ChallengeProps) {
     setSelected(cardNum);
     setPhase('result');
 
-    // Track challenge count
-    const count = parseInt(localStorage.getItem('rh-challenges') || '0');
-    localStorage.setItem('rh-challenges', String(count + 1));
+    // Track challenge wins
+    if (cardNum === correctCard) {
+      const wins = parseInt(localStorage.getItem('rh-challenges-won') || '0');
+      localStorage.setItem('rh-challenges-won', String(wins + 1));
+    }
 
     if (cardNum === correctCard) {
       setStreak(s => s + 1);
