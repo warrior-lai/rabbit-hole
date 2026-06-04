@@ -3,7 +3,7 @@ export const translations = {
     // Landing
     title: 'Rabbit Hole',
     subtitle: 'A game of imagination and revelations',
-    subtitle2: 'What lies deep in your unconscious?',
+    subtitle2: 'What lies deep in the rabbit hole?',
     quickPlay: 'Quick Play',
     connectNostr: 'Connect with Nostr',
     enterName: 'Enter your name',
@@ -61,7 +61,7 @@ export const translations = {
     // Landing
     title: 'Rabbit Hole',
     subtitle: 'Un juego de imaginación y revelaciones',
-    subtitle2: '¿Qué hay en lo profundo de tu inconsciente?',
+    subtitle2: '¿Qué hay en lo profundo de la madriguera?',
     quickPlay: 'Juego Rápido',
     connectNostr: 'Conectar con Nostr',
     enterName: 'Ingresá tu nombre',
