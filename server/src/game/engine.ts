@@ -3,7 +3,7 @@ import type { GameState, Player, RoundResult, Vote, Language } from '../../../sh
 const HAND_SIZE = 6;
 
 // Real cards available — update this number as more art is added
-const TOTAL_REAL_CARDS = 27;
+const TOTAL_REAL_CARDS = 31;
 
 // Generate deck using only real cards, with duplicates if needed for enough rounds
 function generateDeck(playerCount: number): string[] {

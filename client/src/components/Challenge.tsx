@@ -32,7 +32,7 @@ const clues = {
   ],
 };
 
-const TOTAL_CARDS = 27;
+const TOTAL_CARDS = 31;
 
 const CARDS_PER_CHALLENGE = 5;
 
