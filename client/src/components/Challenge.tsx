@@ -218,11 +218,11 @@ export function Challenge({ lang, onBack }: ChallengeProps) {
             if (showResult) {
               if (isCorrectCard) {
                 borderColor = '#F7931A';
-                badge = '⭐';
+                badge = '⚡';
               }
               if (isThis && !isCorrectCard) {
                 borderColor = '#e74c3c';
-                badge = '⚡';
+                badge = '✕';
               }
               if (isThis && isCorrectCard) {
                 borderColor = '#2ecc71';
