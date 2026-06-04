@@ -4,6 +4,7 @@ import { Rules } from '../components/Rules';
 import { NameOrNostr } from '../components/NameOrNostr';
 import { Profile } from '../components/Profile';
 import { Leaderboard } from '../components/Leaderboard';
+import { ArtGallery } from '../components/ArtGallery';
 
 interface LandingProps {
   t: (key: string) => string;
@@ -25,6 +26,7 @@ export function Landing({ t, lang, toggleLang, onQuickPlay, onJoinRoom, onChalle
   const [showRules, setShowRules] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [showArt, setShowArt] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [roomCode, setRoomCode] = useState('');
   const [playerName, setPlayerName] = useState('');
@@ -198,6 +200,20 @@ export function Landing({ t, lang, toggleLang, onQuickPlay, onJoinRoom, onChalle
               >
                 🏆 {lang === 'en' ? 'Ranking' : 'Ranking'}
               </button>
+              <button
+                onClick={() => setShowArt(true)}
+                style={{
+                  background: 'none', border: 'none',
+                  color: 'rgba(255,255,255,0.3)', fontSize: '12px',
+                  cursor: 'pointer', fontFamily: 'inherit',
+                  letterSpacing: '0.5px', padding: '4px 8px',
+                  transition: 'color 0.2s',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.6)'}
+                onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.3)'}
+              >
+                🎨 {lang === 'en' ? 'Art' : 'Arte'}
+              </button>
             </div>
           </div>
         )}
@@ -310,6 +326,7 @@ export function Landing({ t, lang, toggleLang, onQuickPlay, onJoinRoom, onChalle
       {showRules && <Rules lang={lang} onClose={() => setShowRules(false)} />}
       {showProfile && profile && <Profile lang={lang} profile={profile} onClose={() => setShowProfile(false)} />}
       {showLeaderboard && <Leaderboard lang={lang} entries={leaderboard} onClose={() => setShowLeaderboard(false)} onChangePeriod={onRequestLeaderboard} />}
+      {showArt && <ArtGallery lang={lang} onClose={() => setShowArt(false)} />}
 
       <style>{`
         @keyframes gentleBounce {
