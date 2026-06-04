@@ -18,6 +18,8 @@ interface GameBoardProps {
   onVote: (cardId: string) => void;
   onNextRound: () => void;
   onLeaveGame: () => void;
+  onEndGame: () => void;
+  isHost: boolean;
 }
 
 const TURN_SECONDS = 30;
@@ -25,7 +27,7 @@ const VOTE_SECONDS = 30;
 
 export function GameBoard({
   t, gameState, playerId, myHand, revealedCards,
-  onSubmitClue, onPlayCard, onVote, onNextRound, onLeaveGame
+  onSubmitClue, onPlayCard, onVote, onNextRound, onLeaveGame, onEndGame, isHost
 }: GameBoardProps) {
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
   const [clue, setClue] = useState('');
@@ -342,6 +344,28 @@ export function GameBoard({
         >
           🚪 {lang === 'es' ? 'Abandonar Juego' : 'Leave Game'}
         </button>
+        {isHost && (
+          <button
+            onClick={onEndGame}
+            style={{
+              width: '100%',
+              marginTop: '4px',
+              padding: '10px',
+              background: 'none',
+              border: '1px solid rgba(247,147,26,0.2)',
+              borderRadius: '10px',
+              color: 'rgba(247,147,26,0.5)',
+              fontSize: '11px',
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              transition: 'all 0.2s',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(247,147,26,0.5)'; e.currentTarget.style.color = '#F7931A'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(247,147,26,0.2)'; e.currentTarget.style.color = 'rgba(247,147,26,0.5)'; }}
+          >
+            🏁 {lang === 'es' ? 'Finalizar Partida' : 'End Game'}
+          </button>
+        )}
       </div>
     </div>
   );

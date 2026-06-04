@@ -143,6 +143,10 @@ export function App() {
     socket?.emit('game:next-round');
   }, [socket]);
 
+  const handleEndGame = useCallback(() => {
+    socket?.emit('game:end');
+  }, [socket]);
+
   const handlePlayAgain = useCallback(() => {
     socket?.emit('game:start');
   }, [socket]);
@@ -248,6 +252,8 @@ export function App() {
           onVote={handleVote}
           onNextRound={handleNextRound}
           onLeaveGame={handleLeaveGame}
+          onEndGame={handleEndGame}
+          isHost={room?.hostId === socket?.id}
         />
       )}
 

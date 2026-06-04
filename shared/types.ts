@@ -122,6 +122,7 @@ export interface ClientToServerEvents {
   'game:play-card': (data: { cardId: string }) => void;
   'game:vote': (data: { cardId: string }) => void;
   'game:next-round': () => void;
+  'game:end': () => void;
   'profile:get': (data: { statsId: string }) => void;
   'leaderboard:get': (data: { period: 'all' | 'weekly' }) => void;
 }

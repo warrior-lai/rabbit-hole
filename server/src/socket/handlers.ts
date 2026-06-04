@@ -156,6 +156,44 @@ export function setupSocketHandlers(io: TypedServer, socket: TypedSocket): void 
     }
   });
 
+  // End game (host only)
+  socket.on('game:end', () => {
+    try {
+      const room = getRoomByPlayer(socket.id);
+      if (!room) throw new Error('Not in a room');
+      if (room.hostId !== socket.id) throw new Error('Only host can end game');
+
+      room.gameState.phase = 'finished';
+
+      // Save stats
+      const sorted = [...room.gameState.players].sort((a, b) => b.score - a.score);
+      const winnerId = sorted[0]?.id;
+      room.gameState.players.forEach(p => {
+        let correct = 0, total = 0, deceived = 0;
+        room.gameState.roundResults.forEach(r => {
+          if (p.id !== r.storytellerId) {
+            total++;
+            const voted = r.votes.find(v => v.voterId === p.id);
+            if (voted && voted.cardId === r.storytellerCardId) correct++;
+          }
+          const playerCard = r.playedCards.find(c => c.playerId === p.id);
+          if (playerCard && p.id !== r.storytellerId) {
+            deceived += r.votes.filter(v => v.cardId === playerCard.cardId).length;
+          }
+        });
+        updateStats(p.id, p.name, p.score, p.id === winnerId, correct, total, deceived, p.npub);
+      });
+
+      const finalScores = room.gameState.players.map(p => ({
+        playerId: p.id,
+        score: p.score,
+      }));
+      io.to(room.id).emit('game:finished', finalScores);
+    } catch (err: any) {
+      socket.emit('error', err.message);
+    }
+  });
+
   // Profile
   socket.on('profile:get', (data) => {
     const stats = getStats(data.statsId);
