@@ -74,7 +74,9 @@ export function setupSocketHandlers(io: TypedServer, socket: TypedSocket): void 
       const room = getRoomByPlayer(socket.id);
       if (!room) throw new Error('Not in a room');
 
+      console.log(`🃏 ${socket.id} played card ${data.cardId}. Phase: ${room.gameState.phase}`);
       room.gameState = playCard(room.gameState, socket.id, data.cardId);
+      console.log(`🃏 Cards played: ${room.gameState.playedCards.length}/${room.gameState.players.length}. New phase: ${room.gameState.phase}`);
 
       if (room.gameState.phase === 'voting') {
         const shuffled = [...room.gameState.playedCards].sort(() => Math.random() - 0.5);
@@ -84,6 +86,7 @@ export function setupSocketHandlers(io: TypedServer, socket: TypedSocket): void 
         io.to(room.id).emit('room:updated', room);
       }
     } catch (err: any) {
+      console.log(`❌ play-card error: ${err.message} (player: ${socket.id})`);
       socket.emit('error', err.message);
     }
   });

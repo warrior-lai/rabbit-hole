@@ -35,12 +35,23 @@ export function App() {
       setRoom(updatedRoom);
       if (updatedRoom.gameState.phase === 'waiting') {
         setScreen('lobby');
+        setGameState(null);
+        return;
       }
-      // Update game state but protect scoring phase
+      // During active game: update counters (playedCards, votes, players)
+      // but protect the current phase (don't let room:updated override scoring etc.)
       setGameState(prev => {
-        if (!prev) return updatedRoom.gameState.phase !== 'waiting' ? updatedRoom.gameState : prev;
-        if (prev.phase === 'scoring' && updatedRoom.gameState.phase !== 'storytelling') return prev;
-        return updatedRoom.gameState;
+        if (!prev) return updatedRoom.gameState;
+        // Keep current phase if scoring (wait for next-round)
+        const phase = prev.phase === 'scoring' ? prev.phase : updatedRoom.gameState.phase;
+        return {
+          ...updatedRoom.gameState,
+          phase,
+          // Preserve round results and clue
+          roundResults: prev.roundResults.length > updatedRoom.gameState.roundResults.length
+            ? prev.roundResults : updatedRoom.gameState.roundResults,
+          clue: prev.clue || updatedRoom.gameState.clue,
+        };
       });
     });
 
