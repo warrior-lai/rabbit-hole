@@ -131,4 +131,4 @@ MIT
 
 *Down the rabbit hole we go.* 🐇⚡
 
-Construido con ☕ para [La Crypta](https://lacrypta.ar)
+Construido con amor para [La Crypta](https://lacrypta.ar) 💛
