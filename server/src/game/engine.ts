@@ -94,8 +94,9 @@ export function playCard(state: GameState, playerId: string, cardId: string): Ga
   const updatedPlayed = [...state.playedCards, { playerId, cardId }];
 
   // Check if all non-storyteller players have played
-  const activePlayers = state.players.filter(p => p.isConnected && p.id !== state.currentStorytellerId);
-  const allPlayed = activePlayers.every(p => updatedPlayed.some(c => c.playerId === p.id));
+  // Count all players in the game (not just connected — grace period may mark as disconnected briefly)
+  const playersWhoShouldPlay = state.players.filter(p => p.id !== state.currentStorytellerId);
+  const allPlayed = playersWhoShouldPlay.every(p => updatedPlayed.some(c => c.playerId === p.id));
 
   return {
     ...state,
@@ -117,8 +118,8 @@ export function submitVote(state: GameState, voterId: string, cardId: string): G
   const updatedVotes = [...state.votes, { voterId, cardId }];
 
   // Check if all non-storyteller players have voted
-  const activePlayers = state.players.filter(p => p.isConnected && p.id !== state.currentStorytellerId);
-  const allVoted = activePlayers.every(p => updatedVotes.some(v => v.voterId === p.id));
+  const playersWhoShouldVote = state.players.filter(p => p.id !== state.currentStorytellerId);
+  const allVoted = playersWhoShouldVote.every(p => updatedVotes.some(v => v.voterId === p.id));
 
   if (allVoted) {
     return calculateScores({ ...state, votes: updatedVotes });

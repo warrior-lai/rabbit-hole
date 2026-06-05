@@ -36,13 +36,12 @@ export function App() {
       if (updatedRoom.gameState.phase === 'waiting') {
         setScreen('lobby');
       }
-      // Don't overwrite scoring phase — results must stay visible
-      if (updatedRoom.gameState.phase !== 'waiting' && updatedRoom.gameState.phase !== 'scoring') {
-        setGameState(prev => {
-          if (prev?.phase === 'scoring') return prev; // keep scoring visible
-          return updatedRoom.gameState;
-        });
-      }
+      // Update game state but protect scoring phase
+      setGameState(prev => {
+        if (!prev) return updatedRoom.gameState.phase !== 'waiting' ? updatedRoom.gameState : prev;
+        if (prev.phase === 'scoring' && updatedRoom.gameState.phase !== 'storytelling') return prev;
+        return updatedRoom.gameState;
+      });
     });
 
     socket.on('game:started', (state) => {
