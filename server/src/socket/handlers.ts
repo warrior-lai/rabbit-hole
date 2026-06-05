@@ -78,12 +78,13 @@ export function setupSocketHandlers(io: TypedServer, socket: TypedSocket): void 
       room.gameState = playCard(room.gameState, socket.id, data.cardId);
       console.log(`🃏 Cards played: ${room.gameState.playedCards.length}/${room.gameState.players.length}. New phase: ${room.gameState.phase}`);
 
+      // Broadcast updated state
+      io.to(room.id).emit('game:played-count', room.gameState.playedCards.length);
+      io.to(room.id).emit('game:phase-changed', room.gameState.phase);
+      
       if (room.gameState.phase === 'voting') {
         const shuffled = [...room.gameState.playedCards].sort(() => Math.random() - 0.5);
         io.to(room.id).emit('game:cards-revealed', shuffled);
-        io.to(room.id).emit('game:phase-changed', 'voting');
-      } else {
-        io.to(room.id).emit('room:updated', room);
       }
     } catch (err: any) {
       console.log(`❌ play-card error: ${err.message} (player: ${socket.id})`);
@@ -239,25 +240,29 @@ export function setupSocketHandlers(io: TypedServer, socket: TypedSocket): void 
   });
 
   // Disconnect
-  // Grace period before removing player (handles brief disconnects)
+  // Disconnect handler with grace period
   socket.on('disconnect', () => {
     const room = getRoomByPlayer(socket.id);
     if (!room) return;
 
-    // Mark as temporarily disconnected
     const player = room.gameState.players.find(p => p.id === socket.id);
     if (player) player.isConnected = false;
-    io.to(room.id).emit('room:updated', room);
 
-    // Wait 15 seconds before actually removing
+    // Only notify during lobby (not during active game to avoid state corruption)
+    if (room.gameState.phase === 'waiting') {
+      io.to(room.id).emit('room:updated', room);
+    }
+
+    console.log(`💀 ${player?.name || socket.id} disconnected. Grace period: 15s`);
+
+    // Wait 15 seconds before removing
     setTimeout(() => {
-      // Check if they reconnected (socket would rejoin)
       const currentRoom = getRoomByPlayer(socket.id);
-      if (!currentRoom) return; // already removed or room gone
+      if (!currentRoom) return;
 
       const p = currentRoom.gameState.players.find(pl => pl.id === socket.id);
       if (p && !p.isConnected) {
-        // Still disconnected after grace period — remove
+        console.log(`❌ ${p.name} removed after grace period`);
         const { room: updatedRoom, tooFewPlayers } = removePlayer(socket.id);
         if (updatedRoom) {
           io.to(updatedRoom.id).emit('player:left', socket.id);
@@ -266,8 +271,6 @@ export function setupSocketHandlers(io: TypedServer, socket: TypedSocket): void 
           if (tooFewPlayers) {
             updatedRoom.gameState.phase = 'finished';
             io.to(updatedRoom.id).emit('game:cancelled', 'not_enough_players');
-          } else {
-            io.to(updatedRoom.id).emit('room:updated', updatedRoom);
           }
         }
       }

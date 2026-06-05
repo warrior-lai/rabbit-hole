@@ -72,6 +72,15 @@ export function App() {
       setGameState(prev => prev ? { ...prev, clue } : null);
     });
 
+    socket.on('game:played-count', (count) => {
+      setGameState(prev => {
+        if (!prev) return null;
+        // Create dummy played cards array for count display
+        const playedCards = Array.from({ length: count }, (_, i) => ({ playerId: `p${i}`, cardId: `c${i}` }));
+        return { ...prev, playedCards };
+      });
+    });
+
     socket.on('game:cards-revealed', (cards) => {
       setRevealedCards(cards);
     });

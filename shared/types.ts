@@ -79,6 +79,7 @@ export interface ServerToClientEvents {
   'game:started': (gameState: GameState) => void;
   'game:phase-changed': (phase: GamePhase) => void;
   'game:clue': (clue: string) => void;
+  'game:played-count': (count: number) => void;
   'game:cards-revealed': (cards: { playerId: string; cardId: string }[]) => void;
   'game:round-result': (result: RoundResult) => void;
   'game:finished': (finalScores: { playerId: string; score: number }[]) => void;
