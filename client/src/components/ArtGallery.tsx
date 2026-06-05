@@ -24,7 +24,11 @@ const decks: Deck[] = [
     name: 'Bloque Génesis',
     artist: 'Lai',
     cardCount: TOTAL_CARDS,
-    cards: Array.from({ length: TOTAL_CARDS }, (_, i) => i + 1),
+    // Intercalated order: bright cards mixed between dark ones
+    cards: [
+      1, 32, 3, 28, 5, 33, 7, 29, 9, 34, 10, 30, 11, 2, 12, 4, 13, 6, 14, 8, 15, 31,
+      16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27
+    ],
     status: 'active',
   },
   {
