@@ -28,6 +28,16 @@ const instructions = {
       title: 'Card submitted!',
       text: 'Waiting for other players to choose...',
     },
+    'choosing-storyteller': {
+      icon: '🎭',
+      title: 'You are the Storyteller',
+      text: 'Wait for other players to choose their card. You already gave the clue.',
+    },
+    'voting-storyteller': {
+      icon: '🎭',
+      title: 'You are the Storyteller',
+      text: 'Wait for others to vote. The Storyteller doesn\'t vote.',
+    },
     'voting': {
       icon: '🗳️',
       title: 'Time to vote!',
@@ -64,6 +74,16 @@ const instructions = {
       icon: '⏳',
       title: '¡Carta enviada!',
       text: 'Esperando a los demás jugadores...',
+    },
+    'choosing-storyteller': {
+      icon: '🎭',
+      title: 'Sos la Narradora',
+      text: 'Esperá a que los demás elijan su carta. Vos ya diste la pista.',
+    },
+    'voting-storyteller': {
+      icon: '🎭',
+      title: 'Sos la Narradora',
+      text: 'Esperá a que los demás voten. El narrador no vota.',
     },
     'voting': {
       icon: '🗳️',

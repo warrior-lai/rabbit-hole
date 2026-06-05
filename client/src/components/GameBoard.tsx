@@ -50,8 +50,14 @@ export function GameBoard({
   // Determine instruction phase
   const getInstructionPhase = () => {
     if (gameState.phase === 'storytelling') return isStoryteller ? 'storytelling-you' : 'storytelling-wait';
-    if (gameState.phase === 'choosing') return hasPlayed || isStoryteller ? 'choosing-done' : 'choosing';
-    if (gameState.phase === 'voting') return hasVoted || isStoryteller ? 'voting-done' : 'voting';
+    if (gameState.phase === 'choosing') {
+      if (isStoryteller) return 'choosing-storyteller';
+      return hasPlayed ? 'choosing-done' : 'choosing';
+    }
+    if (gameState.phase === 'voting') {
+      if (isStoryteller) return 'voting-storyteller';
+      return hasVoted ? 'voting-done' : 'voting';
+    }
     return 'scoring';
   };
 
