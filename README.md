@@ -1,87 +1,134 @@
 # 🐇 Rabbit Hole
 
-**A multiplayer card game of imagination and revelations — powered by Bitcoin Lightning & Nostr.**
+Un juego de cartas multijugador de imaginación y revelaciones.
 
 > ¿Qué hay en lo profundo de la madriguera?
-> What lies deep in the rabbit hole?
 
-## 🎮 Game Modes
+Rabbit Hole es un juego de cartas online donde jugadores usan arte abstracto y pistas crípticas para explorar los límites de la imaginación. Elegí una carta, dá una pista, engañá a tus rivales — o descubrí quién te está engañando a vos.
 
-### 🎯 Challenge (Solo)
-Play alone! A clue appears with 5 cards — pick the right one. Track your wins with ⚡ and collect cards in your profile.
+Construido para la Hackatón de La Crypta. Arte original por Lai.
 
-### ⚡ Multiplayer (3-10 players)
-1. **The Storyteller** picks a card and gives a clue
-2. **Other players** choose their best matching card
-3. **All cards are revealed** — everyone votes for the Storyteller's card
-4. **Scoring** rewards creative clues (not too obvious, not too cryptic!)
-5. **The player with the most points wins!** 🎉
+---
 
-## 🚀 Features
+## 🎮 Modos de Juego
 
-- 🎯 **Challenge Mode** — Solo play with streak tracking
-- ⚡ **Quick Multiplayer** — Create/join rooms with 5-letter codes
-- 🔑 **Nostr Identity** — Login with NIP-07, fetches profile name + picture from relays
-- 🃏 **31 Original Cards** — "Bloque Génesis" deck by Lai
-- 🎨 **Art Gallery** — Browse card decks with lightbox viewer
-- 👤 **Player Profile** — Stats, wins, card collection
-- 🏆 **Global Ranking** — All-time and weekly leaderboard
-- 📋 **Game Rules** — Full rules modal in ES/EN
-- 🌍 **Bilingual** — English 🇬🇧 & Español 🇪🇸
-- 🎉 **Confetti** — Winner celebration
-- 📱 **Responsive** — Desktop, tablet, mobile
-- ✨ **Animated Background** — Vibrant color blobs with sparkles
-- ⏱️ **30s Timer** — Per turn
-- 🚪 **Leave Game** — Graceful disconnect + host transfer
+### 🎯 Desafío (Individual)
+Jugá solo. Aparece una pista con 5 cartas — elegí la correcta. Acumulá victorias ⚡ y coleccioná cartas en tu perfil.
 
-## 🛠 Tech Stack
+### ⚡ Multijugador (3-10 jugadores)
+1. **El Narrador** elige una carta de su mano y da una pista
+2. **Los demás** eligen la carta que mejor encaje con la pista
+3. **Se revelan todas las cartas** — todos votan cuál es la del Narrador
+4. **Puntuación**: las pistas creativas ganan (ni muy obvias, ni muy crípticas)
+5. **Gana** el jugador con más puntos al final 🎉
 
-- **Frontend:** React + TypeScript + Vite
-- **Backend:** Node.js + TypeScript + Socket.io
-- **Identity:** Nostr (NIP-07) + relay profile fetch
-- **Styling:** CSS with glassmorphism + animated gradients
-- **i18n:** Built-in EN/ES
-- **Deploy:** Render (server + static client)
+---
 
-## 📦 Project Structure
+## 🚀 Características
+
+| Feature | Descripción |
+|---------|-------------|
+| 🎯 Modo Desafío | Jugá solo, acumulá victorias, coleccioná cartas |
+| ⚡ Multijugador | Creá o unite a salas con código de 5 letras |
+| 🔑 Identidad Nostr | Login NIP-07 — trae tu nombre y foto de perfil de los relays |
+| 🃏 34 Cartas Originales | Mazo "Bloque Génesis" — arte by Lai |
+| 🎨 Galería de Arte | Explorá los mazos, mirá las cartas en lightbox |
+| 👤 Perfil | Stats, victorias, colección de cartas ganadas |
+| 🏆 Ranking Global | Tabla all-time y semanal |
+| 📋 Reglas | Modal completo ES/EN |
+| 🌍 Bilingüe | Español 🇪🇸 & English 🇬🇧 |
+| 🎉 Confetti | Celebración del ganador |
+| 📱 Responsive | Desktop, tablet, celular |
+| ✨ Fondo Animado | Blobs de color vibrantes con destellos |
+| ⏱️ Timer 30s | Por turno |
+| 🚪 Abandonar | Desconexión limpia + transferencia de host |
+| 🏁 Finalizar | El host puede terminar con puntajes parciales |
+
+---
+
+## 🎨 Arte
+
+El primer mazo — **Bloque Génesis** — fue creado por Lai. 34 ilustraciones originales con temática Bitcoin, libertad, soberanía y mundos abstractos.
+
+La galería soporta múltiples mazos. Más colecciones próximamente.
+
+---
+
+## 🛠 Stack Técnico
+
+| Capa | Tecnología |
+|------|------------|
+| Frontend | React + TypeScript + Vite |
+| Backend | Node.js + TypeScript + Socket.io |
+| Identidad | Nostr (NIP-07) + fetch de perfil desde relays |
+| Estilos | CSS con glassmorphism + gradientes animados |
+| i18n | ES/EN integrado |
+| Deploy | Render (server + client estático) |
+
+---
+
+## 📦 Estructura
 
 ```
 rabbit-hole/
-├── client/
-│   ├── public/cards/     # 31 card images (Bloque Génesis deck)
+├── client/                 # Frontend React
+│   ├── public/cards/       # 34 imágenes de cartas
 │   └── src/
-│       ├── components/   # 15 UI components
-│       ├── pages/        # Landing, Lobby
-│       ├── hooks/        # useSocket, useLanguage, useNostrProfile
-│       ├── i18n/         # Translations
-│       └── styles/       # Global CSS
-├── server/
+│       ├── components/     # 15 componentes UI
+│       ├── pages/          # Landing, Lobby
+│       ├── hooks/          # useSocket, useLanguage, useNostrProfile
+│       ├── game/           # Lógica del desafío
+│       ├── i18n/           # Traducciones
+│       └── styles/         # CSS global
+├── server/                 # Backend Node.js
 │   └── src/
-│       ├── game/         # Engine, rooms, stats
-│       └── socket/       # WebSocket handlers
-├── shared/               # Types shared between client/server
-└── render.yaml           # Deploy config
+│       ├── game/           # Engine, salas, stats
+│       └── socket/         # Handlers WebSocket
+├── shared/                 # Tipos compartidos client/server
+└── render.yaml             # Config de deploy
 ```
 
-## 🏃 Quick Start
+---
+
+## 🏃 Inicio Rápido
 
 ```bash
-# Install
+# Instalar dependencias
 cd client && npm install && cd ../server && npm install
 
-# Dev
-cd server && npx tsx src/index.ts   # Port 3001
-cd client && npm run dev            # Port 5173
+# Desarrollo
+cd server && npx tsx src/index.ts   # Puerto 3001
+cd client && npm run dev            # Puerto 5173
 ```
 
-## 🌐 Live
+Abrí http://localhost:5173 — el cliente se conecta al server automáticamente.
 
-**Play:** https://rabbit-hole-v5wp.onrender.com
+---
 
-## 📄 License
+## 🌐 Jugar Online
+
+**▶ https://rabbit-hole-v5wp.onrender.com**
+
+---
+
+## 🤝 Contribuir
+
+1. Fork el repo
+2. Creá tu branch (`git checkout -b feature/mejora`)
+3. Commit (`git commit -m 'Agrega X'`)
+4. Push (`git push origin feature/mejora`)
+5. Abrí un Pull Request
+
+**Agregar cartas:** poné imágenes JPG en `client/public/cards/` y actualizá `TOTAL_CARDS` en `CardHand.tsx`, `Challenge.tsx`, `ArtGallery.tsx` y `engine.ts`.
+
+---
+
+## 📄 Licencia
 
 MIT
 
 ---
 
 *Down the rabbit hole we go.* 🐇⚡
+
+Construido con ☕ para [La Crypta](https://lacrypta.ar)
