@@ -5,8 +5,8 @@ import { Landing } from './pages/Landing';
 import { Lobby } from './pages/Lobby';
 import { GameBoard } from './components/GameBoard';
 import { GameOver } from './components/GameOver';
-import { Challenge } from './components/Challenge';
 import { GameCancelled } from './components/GameCancelled';
+import { Challenge } from './components/Challenge';
 import type { Room, GameState, PlayerProfile, LeaderboardEntry } from '@shared/types';
 
 type Screen = 'landing' | 'lobby' | 'game' | 'results' | 'cancelled' | 'challenge';
@@ -19,6 +19,7 @@ export function App() {
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [myHand, setMyHand] = useState<string[]>([]);
   const [revealedCards, setRevealedCards] = useState<{ playerId: string; cardId: string }[]>([]);
+  const [playedCount, setPlayedCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<PlayerProfile | null>(null);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
@@ -31,32 +32,19 @@ export function App() {
   useEffect(() => {
     if (!socket) return;
 
+    // LOBBY
     socket.on('room:updated', (updatedRoom) => {
       setRoom(updatedRoom);
       if (updatedRoom.gameState.phase === 'waiting') {
         setScreen('lobby');
-        setGameState(null);
-        return;
       }
-      // During active game: update counters (playedCards, votes, players)
-      // but protect the current phase (don't let room:updated override scoring etc.)
-      setGameState(prev => {
-        if (!prev) return updatedRoom.gameState;
-        // Keep current phase if scoring (wait for next-round)
-        const phase = prev.phase === 'scoring' ? prev.phase : updatedRoom.gameState.phase;
-        return {
-          ...updatedRoom.gameState,
-          phase,
-          // Preserve round results and clue
-          roundResults: prev.roundResults.length > updatedRoom.gameState.roundResults.length
-            ? prev.roundResults : updatedRoom.gameState.roundResults,
-          clue: prev.clue || updatedRoom.gameState.clue,
-        };
-      });
     });
 
+    // GAME START — this is the main state setter
     socket.on('game:started', (state) => {
       setGameState(state);
+      setRevealedCards([]);
+      setPlayedCount(0);
       setScreen('game');
     });
 
@@ -64,8 +52,13 @@ export function App() {
       setMyHand(cards);
     });
 
+    // PHASE CHANGES
     socket.on('game:phase-changed', (phase) => {
       setGameState(prev => prev ? { ...prev, phase } : null);
+      if (phase === 'choosing' || phase === 'storytelling') {
+        setPlayedCount(0);
+        setRevealedCards([]);
+      }
     });
 
     socket.on('game:clue', (clue) => {
@@ -73,18 +66,14 @@ export function App() {
     });
 
     socket.on('game:played-count', (count) => {
-      setGameState(prev => {
-        if (!prev) return null;
-        // Create dummy played cards array for count display
-        const playedCards = Array.from({ length: count }, (_, i) => ({ playerId: `p${i}`, cardId: `c${i}` }));
-        return { ...prev, playedCards };
-      });
+      setPlayedCount(count);
     });
 
     socket.on('game:cards-revealed', (cards) => {
       setRevealedCards(cards);
     });
 
+    // SCORING
     socket.on('game:round-result', (result) => {
       setGameState(prev => {
         if (!prev) return null;
@@ -93,14 +82,14 @@ export function App() {
           phase: 'scoring' as const,
           roundResults: [...prev.roundResults, result],
           players: prev.players.map(p => {
-            const scoreEntries = result.scores.filter(s => s.playerId === p.id);
-            const bonus = scoreEntries.reduce((sum, s) => sum + s.points, 0);
+            const bonus = result.scores.filter(s => s.playerId === p.id).reduce((sum, s) => sum + s.points, 0);
             return { ...p, score: p.score + bonus };
           }),
         };
       });
     });
 
+    // GAME END
     socket.on('game:finished', () => {
       setScreen('results');
     });
@@ -111,37 +100,27 @@ export function App() {
 
     socket.on('host:changed', () => {});
 
-    socket.on('profile:data', (data) => {
-      setProfile(data);
-    });
+    socket.on('player:left', () => {});
 
-    socket.on('leaderboard:data', (entries) => {
-      setLeaderboard(entries);
-    });
+    // PROFILE/LEADERBOARD
+    socket.on('profile:data', (data) => setProfile(data));
+    socket.on('leaderboard:data', (entries) => setLeaderboard(entries));
 
     socket.on('error', (msg) => {
       setError(msg);
       setTimeout(() => setError(null), 3000);
     });
 
-    return () => {
-      socket.removeAllListeners();
-    };
+    return () => { socket.removeAllListeners(); };
   }, [socket]);
 
+  // === HANDLERS ===
   const handleQuickPlay = useCallback((name: string, npub?: string) => {
-    if (!socket) return;
-    socket.emit('room:create', {
-      playerName: name,
-      npub,
-      language: lang,
-      isPrivate: false,
-    });
+    socket?.emit('room:create', { playerName: name, npub, language: lang, isPrivate: false });
   }, [socket, lang]);
 
   const handleJoinRoom = useCallback((name: string, code: string, npub?: string) => {
-    if (!socket) return;
-    socket.emit('room:join', { code, playerName: name, npub });
+    socket?.emit('room:join', { code, playerName: name, npub });
   }, [socket]);
 
   const handleStartGame = useCallback(() => {
@@ -170,12 +149,7 @@ export function App() {
     socket?.emit('game:end');
   }, [socket]);
 
-  const handlePlayAgain = useCallback(() => {
-    socket?.emit('game:start');
-  }, [socket]);
-
   const handleLeaveGame = useCallback(() => {
-    // Disconnect and go back to landing
     socket?.disconnect();
     socket?.connect();
     setScreen('landing');
@@ -183,6 +157,7 @@ export function App() {
     setGameState(null);
     setMyHand([]);
     setRevealedCards([]);
+    setPlayedCount(0);
   }, [socket]);
 
   const handleBackToLobby = useCallback(() => {
@@ -191,26 +166,26 @@ export function App() {
     setGameState(null);
     setMyHand([]);
     setRevealedCards([]);
+    setPlayedCount(0);
   }, []);
+
+  // Inject playedCount into gameState for display
+  const displayGameState = gameState ? {
+    ...gameState,
+    playedCards: playedCount > gameState.playedCards.length
+      ? Array.from({ length: playedCount }, (_, i) => gameState.playedCards[i] || { playerId: `p${i}`, cardId: `c${i}` })
+      : gameState.playedCards,
+  } : null;
 
   return (
     <>
-      {/* Animated vibrant background */}
+      {/* Animated background */}
       <div className="animated-bg">
-        <div className="blob" />
-        <div className="blob" />
-        <div className="blob" />
-        <div className="blob" />
-        <div className="blob" />
-        <div className="sparkle" />
-        <div className="sparkle" />
-        <div className="sparkle" />
-        <div className="sparkle" />
-        <div className="sparkle" />
-        <div className="sparkle" />
-        <div className="sparkle" />
-        <div className="sparkle" />
-        <div className="sparkle" />
+        <div className="blob" /><div className="blob" /><div className="blob" />
+        <div className="blob" /><div className="blob" />
+        <div className="sparkle" /><div className="sparkle" /><div className="sparkle" />
+        <div className="sparkle" /><div className="sparkle" /><div className="sparkle" />
+        <div className="sparkle" /><div className="sparkle" /><div className="sparkle" />
         <div className="sparkle" />
       </div>
 
@@ -237,7 +212,7 @@ export function App() {
         </div>
       )}
 
-      {screen !== 'landing' && (
+      {screen !== 'landing' && screen !== 'challenge' && (
         <button className="lang-toggle" onClick={toggleLang}>
           {lang === 'en' ? '🇪🇸 ES' : '🇬🇧 EN'}
         </button>
@@ -246,8 +221,8 @@ export function App() {
       {screen === 'landing' && (
         <Landing
           t={t} lang={lang} toggleLang={toggleLang}
-          onQuickPlay={(name: string, npub?: string) => handleQuickPlay(name, npub)}
-          onJoinRoom={(name: string, code: string, npub?: string) => handleJoinRoom(name, code, npub)}
+          onQuickPlay={(name, npub) => handleQuickPlay(name, npub)}
+          onJoinRoom={(name, code, npub) => handleJoinRoom(name, code, npub)}
           onChallenge={() => setScreen('challenge')}
           profile={profile}
           leaderboard={leaderboard}
@@ -257,16 +232,12 @@ export function App() {
       )}
 
       {screen === 'lobby' && room && socket && (
-        <Lobby
-          t={t} room={room}
-          playerId={socket.id || ''}
-          onStart={handleStartGame}
-        />
+        <Lobby t={t} room={room} playerId={socket.id || ''} onStart={handleStartGame} />
       )}
 
-      {screen === 'game' && gameState && socket && (
+      {screen === 'game' && displayGameState && socket && (
         <GameBoard
-          t={t} gameState={gameState}
+          t={t} gameState={displayGameState}
           playerId={socket.id || ''}
           myHand={myHand}
           revealedCards={revealedCards}
@@ -282,26 +253,18 @@ export function App() {
 
       {screen === 'results' && gameState && (
         <GameOver
-          t={t}
-          players={gameState.players}
-          onPlayAgain={handlePlayAgain}
+          t={t} players={gameState.players}
+          onPlayAgain={handleStartGame}
           onBackToLobby={handleBackToLobby}
         />
       )}
 
       {screen === 'challenge' && (
-        <Challenge
-          lang={lang}
-          onBack={() => setScreen('landing')}
-        />
+        <Challenge lang={lang} onBack={() => setScreen('landing')} />
       )}
 
       {screen === 'cancelled' && (
-        <GameCancelled
-          lang={lang}
-          reason="not_enough_players"
-          onNewGame={handleBackToLobby}
-        />
+        <GameCancelled lang={lang} reason="not_enough_players" onNewGame={handleBackToLobby} />
       )}
     </>
   );
