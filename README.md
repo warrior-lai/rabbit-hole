@@ -4,7 +4,7 @@ Un juego de cartas multijugador de imaginación y revelaciones.
 
 > ¿Qué hay en lo profundo de la madriguera?
 
-Rabbit Hole es un juego de cartas online donde jugadores usan arte abstracto y pistas crípticas para explorar los límites de la imaginación. Elegí una carta, dá una pista, engañá a tus rivales — o descubrí quién te está engañando a vos.
+Rabbit Hole es un juego de cartas online donde jugadores usan arte abstracto y pistas crípticas para explorar los límites de la imaginación. Elegí una carta, dá una pista, despistá a tus rivales — o descubrí quién está más cerca de la verdad.
 
 Construido para la Hackatón de La Crypta. Arte digital original creado por Artistas.
 
