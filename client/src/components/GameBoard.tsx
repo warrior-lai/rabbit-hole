@@ -13,6 +13,7 @@ interface GameBoardProps {
   playerId: string;
   myHand: string[];
   revealedCards: { playerId: string; cardId: string }[];
+  lastRoundResult: any;
   onSubmitClue: (cardId: string, clue: string) => void;
   onPlayCard: (cardId: string) => void;
   onVote: (cardId: string) => void;
@@ -27,7 +28,7 @@ const VOTE_SECONDS = 30;
 
 export function GameBoard({
   t, gameState, playerId, myHand, revealedCards,
-  onSubmitClue, onPlayCard, onVote, onNextRound, onLeaveGame, onEndGame, isHost
+  onSubmitClue, onPlayCard, onVote, onNextRound, onLeaveGame, onEndGame, isHost, lastRoundResult
 }: GameBoardProps) {
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
   const [clue, setClue] = useState('');
@@ -298,12 +299,12 @@ export function GameBoard({
           </div>
         )}
 
-        {/* SCORING */}
-        {gameState.phase === 'scoring' && gameState.roundResults.length > 0 && (
+        {/* SCORING — shown when we have a round result */}
+        {lastRoundResult && (gameState.phase === 'scoring' || gameState.phase === 'voting') && (
           <div>
             <RoundResults
               t={t}
-              result={gameState.roundResults[gameState.roundResults.length - 1]}
+              result={lastRoundResult}
               players={gameState.players}
               playerId={playerId}
             />

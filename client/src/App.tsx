@@ -20,6 +20,7 @@ export function App() {
   const [myHand, setMyHand] = useState<string[]>([]);
   const [revealedCards, setRevealedCards] = useState<{ playerId: string; cardId: string }[]>([]);
   const [playedCount, setPlayedCount] = useState(0);
+  const [lastRoundResult, setLastRoundResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<PlayerProfile | null>(null);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
@@ -45,6 +46,7 @@ export function App() {
       setGameState(state);
       setRevealedCards([]);
       setPlayedCount(0);
+      setLastRoundResult(null);
       setScreen('game');
     });
 
@@ -77,6 +79,7 @@ export function App() {
 
     // SCORING
     socket.on('game:round-result', (result) => {
+      setLastRoundResult(result);
       setGameState(prev => {
         if (!prev) return null;
         return {
@@ -250,6 +253,7 @@ export function App() {
           onLeaveGame={handleLeaveGame}
           onEndGame={handleEndGame}
           isHost={room?.hostId === socket?.id}
+          lastRoundResult={lastRoundResult}
         />
       )}
 
