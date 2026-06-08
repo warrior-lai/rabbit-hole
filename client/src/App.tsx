@@ -54,6 +54,8 @@ export function App() {
 
     // PHASE CHANGES
     socket.on('game:phase-changed', (phase) => {
+      // Don't overwrite scoring — game:round-result handles that with full data
+      if (phase === 'scoring') return;
       setGameState(prev => prev ? { ...prev, phase } : null);
       if (phase === 'choosing' || phase === 'storytelling') {
         setPlayedCount(0);
