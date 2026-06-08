@@ -28,12 +28,20 @@ export function Landing({ t, lang, toggleLang, onQuickPlay, onJoinRoom, onChalle
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [showArt, setShowArt] = useState(false);
   const [loaded, setLoaded] = useState(false);
-  const [roomCode, setRoomCode] = useState('');
+  const [roomCode, setRoomCode] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('code') || '';
+  });
   const [playerName, setPlayerName] = useState('');
   const [playerNpub, setPlayerNpub] = useState<string | undefined>();
 
   useEffect(() => {
     setTimeout(() => setLoaded(true), 100);
+    // Auto-switch to join mode if code in URL
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('code')) {
+      setMode('join-identity');
+    }
   }, []);
 
   const handleNameForCreate = (name: string) => {

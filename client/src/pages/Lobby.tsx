@@ -18,8 +18,10 @@ export function Lobby({ t, room, playerId, onStart }: LobbyProps) {
     setTimeout(() => setLoaded(true), 100);
   }, []);
 
-  const copyCode = () => {
-    navigator.clipboard.writeText(room.code);
+  const shareLink = `${window.location.origin}?code=${room.code}`;
+
+  const copyLink = () => {
+    navigator.clipboard.writeText(shareLink);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -55,7 +57,7 @@ export function Lobby({ t, room, playerId, onStart }: LobbyProps) {
 
         {/* Room Code Card */}
         <div
-          onClick={copyCode}
+          onClick={copyLink}
           style={{
             background: 'rgba(255,255,255,0.06)',
             border: '1px solid rgba(255,255,255,0.1)',
@@ -100,7 +102,7 @@ export function Lobby({ t, room, playerId, onStart }: LobbyProps) {
             marginTop: '10px',
             transition: 'color 0.2s',
           }}>
-            {copied ? '✅ ' + t('copied') : '📋 Click to copy'}
+            {copied ? '✅ ' + t('copied') : '📋 ' + (lang === 'es' ? 'Copiar link de invitación' : 'Copy invite link')}
           </p>
         </div>
 
