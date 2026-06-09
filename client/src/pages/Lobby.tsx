@@ -102,7 +102,7 @@ export function Lobby({ t, room, playerId, onStart }: LobbyProps) {
             marginTop: '10px',
             transition: 'color 0.2s',
           }}>
-            {copied ? '✅ ' + t('copied') : '📋 ' + (lang === 'es' ? 'Copiar link de invitación' : 'Copy invite link')}
+            {copied ? '✅ ' + t('copied') : '📋 ' + (navigator.language.startsWith('es') ? 'Copiar link de invitación' : 'Copy invite link')}
           </p>
         </div>
 
