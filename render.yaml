@@ -2,7 +2,7 @@ services:
   - type: web
     name: rabbit-hole
     runtime: node
-    buildCommand: "npm install && cd client && npm install && npx vite build && cd ../server && npm install"
+    buildCommand: "cd client && npm install --include=dev && npx vite build && cd ../server && npm install"
     startCommand: "cd server && npx tsx src/index.ts"
     envVars:
       - key: PORT
