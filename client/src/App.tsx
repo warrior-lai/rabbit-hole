@@ -26,7 +26,10 @@ export function App() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [statsId] = useState(() => {
     let id = localStorage.getItem('rh-stats-id');
-    if (!id) { id = crypto.randomUUID(); localStorage.setItem('rh-stats-id', id); }
+    if (!id) {
+      try { id = crypto.randomUUID(); } catch { id = Math.random().toString(36).substring(2) + Date.now().toString(36); }
+      localStorage.setItem('rh-stats-id', id);
+    }
     return id;
   });
 
