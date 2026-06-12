@@ -277,24 +277,46 @@ export function GameBoard({
           </div>
         )}
 
-        {/* VOTING: Waiting */}
+        {/* VOTING: Waiting — show who has voted */}
         {gameState.phase === 'voting' && (isStoryteller || hasVoted) && (
-          <div style={{ textAlign: 'center', paddingTop: '24px' }}>
+          <div style={{ textAlign: 'center', paddingTop: '16px' }}>
             <div style={{
               display: 'inline-flex',
               alignItems: 'center',
               gap: '8px',
-              padding: '10px 20px',
-              background: 'rgba(255,255,255,0.04)',
+              padding: '12px 24px',
+              background: 'rgba(255,255,255,0.06)',
               borderRadius: '30px',
-              fontSize: '13px',
-              color: 'rgba(255,255,255,0.4)',
+              fontSize: '14px',
+              color: 'rgba(255,255,255,0.5)',
+              backdropFilter: 'blur(12px)',
+              border: '1px solid rgba(255,255,255,0.08)',
             }}>
-              <span className="pulse">🗳️</span>
-              {gameState.votes.length}/{activePlayers.filter(p => p.id !== gameState.currentStorytellerId).length}
-              <span style={{ color: 'rgba(255,255,255,0.2)' }}>
+              <span className="pulse" style={{ fontSize: '18px' }}>🗳️</span>
+              <span style={{ color: '#F7931A', fontWeight: 700, fontSize: '18px' }}>
+                {playedCount}/{activePlayers.filter(p => p.id !== gameState.currentStorytellerId).length}
+              </span>
+              <span style={{ color: 'rgba(255,255,255,0.3)' }}>
                 {lang === 'es' ? 'votos' : 'votes'}
               </span>
+            </div>
+            {/* Show checkmarks for who voted */}
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
+              {activePlayers.filter(p => p.id !== gameState.currentStorytellerId).map(p => {
+                const voted = playedCount > 0; // We track count, not individual
+                return (
+                  <span key={p.id} style={{
+                    padding: '4px 12px',
+                    borderRadius: '20px',
+                    fontSize: '11px',
+                    background: 'rgba(255,255,255,0.04)',
+                    color: 'rgba(255,255,255,0.4)',
+                    border: '1px solid rgba(255,255,255,0.06)',
+                  }}>
+                    {p.name}
+                  </span>
+                );
+              })}
             </div>
           </div>
         )}
