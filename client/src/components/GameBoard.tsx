@@ -322,7 +322,7 @@ export function GameBoard({
         )}
 
         {/* SCORING — shown when we have a round result */}
-        {lastRoundResult && (gameState.phase === 'scoring' || gameState.phase === 'voting') && (
+        {lastRoundResult && (
           <div>
             <RoundResults
               t={t}
