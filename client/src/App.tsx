@@ -148,6 +148,7 @@ export function App() {
 
   const handlePlayCard = useCallback((cardId: string) => {
     socket?.emit('game:play-card', { cardId });
+    // Don't remove from hand immediately — let UI show it as selected until phase changes
     setMyHand(prev => prev.filter(c => c !== cardId));
   }, [socket]);
 

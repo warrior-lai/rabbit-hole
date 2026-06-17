@@ -91,6 +91,7 @@ export interface ServerToClientEvents {
   'player:hand': (cards: string[]) => void;
   'host:changed': (newHostId: string) => void;
   'error': (message: string) => void;
+  'rejoin:failed': () => void;
 }
 
 export interface PlayerProfile {
@@ -126,4 +127,6 @@ export interface ClientToServerEvents {
   'game:end': () => void;
   'profile:get': (data: { statsId: string }) => void;
   'leaderboard:get': (data: { period: 'all' | 'weekly' }) => void;
+  'session:register': (data: { sessionToken: string }) => void;
+  'room:rejoin': (data: { sessionToken: string }) => void;
 }

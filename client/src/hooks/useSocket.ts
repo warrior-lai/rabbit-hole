@@ -39,10 +39,10 @@ export function useSocket() {
     socket.on('connect', () => {
       setIsConnected(true);
       // Register session token on every connect
-      (socket as any).emit('session:register', { sessionToken: sessionToken.current });
+      socket.emit('session:register', { sessionToken: sessionToken.current });
       // Try to rejoin if we were in a room
       if (wasInRoom.current) {
-        (socket as any).emit('room:rejoin', { sessionToken: sessionToken.current });
+        socket.emit('room:rejoin', { sessionToken: sessionToken.current });
       }
     });
     socket.on('disconnect', () => setIsConnected(false));

@@ -31,6 +31,7 @@ export function GameBoard({
   onSubmitClue, onPlayCard, onVote, onNextRound, onLeaveGame, onEndGame, isHost, lastRoundResult
 }: GameBoardProps) {
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
+  const [choosingCard, setChoosingCard] = useState<string | null>(null);
   const [clue, setClue] = useState('');
   const isStoryteller = gameState.currentStorytellerId === playerId;
   const storyteller = gameState.players.find(p => p.id === gameState.currentStorytellerId);
@@ -237,9 +238,34 @@ export function GameBoard({
           <div className="fade-in">
             <CardHand
               cards={myHand}
-              selectedCard={null}
-              onSelect={(id) => onPlayCard(id)}
+              selectedCard={choosingCard}
+              onSelect={(id) => setChoosingCard(id === choosingCard ? null : id)}
             />
+            {choosingCard && (
+              <div style={{ textAlign: 'center', marginTop: '12px' }}>
+                <button
+                  className="btn-primary"
+                  onClick={() => {
+                    onPlayCard(choosingCard);
+                    setChoosingCard(null);
+                  }}
+                  style={{
+                    padding: '10px 32px',
+                    fontSize: '14px',
+                    fontWeight: 700,
+                    borderRadius: '24px',
+                    background: 'linear-gradient(135deg, #F7931A, #e2820e)',
+                    color: '#fff',
+                    border: 'none',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 16px rgba(247,147,26,0.3)',
+                    transition: 'transform 0.15s',
+                  }}
+                >
+                  {lang === 'es' ? '✅ Confirmar carta' : '✅ Confirm card'}
+                </button>
+              </div>
+            )}
           </div>
         )}
 
