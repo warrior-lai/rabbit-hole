@@ -3,6 +3,8 @@ import { createGameState } from './engine';
 
 const rooms = new Map<string, Room>();
 const playerRooms = new Map<string, string>(); // socketId -> roomId
+const sessionToSocket = new Map<string, string>(); // sessionToken -> socketId
+const socketToSession = new Map<string, string>(); // socketId -> sessionToken
 
 function generateCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -88,6 +90,53 @@ export function joinRoom(
   room.gameState.players.push(player);
   playerRooms.set(playerId, room.id);
   return room;
+}
+
+export function rejoinRoom(sessionToken: string, newSocketId: string): { room: Room; player: Player } | null {
+  const oldSocketId = sessionToSocket.get(sessionToken);
+  if (!oldSocketId) return null;
+
+  const roomId = playerRooms.get(oldSocketId);
+  if (!roomId) return null;
+
+  const room = rooms.get(roomId);
+  if (!room) return null;
+
+  const player = room.gameState.players.find(p => p.id === oldSocketId);
+  if (!player) return null;
+
+  // Swap socket ID
+  player.id = newSocketId;
+  player.isConnected = true;
+
+  playerRooms.delete(oldSocketId);
+  playerRooms.set(newSocketId, roomId);
+
+  // Update host if needed
+  if (room.hostId === oldSocketId) {
+    room.hostId = newSocketId;
+  }
+
+  // Update storyteller if needed
+  if (room.gameState.currentStorytellerId === oldSocketId) {
+    room.gameState.currentStorytellerId = newSocketId;
+  }
+
+  // Update session maps
+  sessionToSocket.set(sessionToken, newSocketId);
+  socketToSession.delete(oldSocketId);
+  socketToSession.set(newSocketId, sessionToken);
+
+  return { room, player };
+}
+
+export function registerSession(socketId: string, sessionToken: string): void {
+  sessionToSocket.set(sessionToken, socketId);
+  socketToSession.set(socketId, sessionToken);
+}
+
+export function getSessionToken(socketId: string): string | undefined {
+  return socketToSession.get(socketId);
 }
 
 export function startGame(roomId: string, requesterId: string): Room {

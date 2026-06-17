@@ -1,6 +1,6 @@
 import type { Server, Socket } from 'socket.io';
 import type { ClientToServerEvents, ServerToClientEvents } from '../../../shared/types';
-import { createRoom, joinRoom, startGame, getRoomByPlayer, removePlayer } from '../game/rooms';
+import { createRoom, joinRoom, startGame, getRoomByPlayer, removePlayer, rejoinRoom, registerSession, getSessionToken } from '../game/rooms';
 import { submitClue, playCard, submitVote, nextRound } from '../game/engine';
 import { getStats, updateStats, getLeaderboard, getWeeklyLeaderboard } from '../game/stats';
 
@@ -8,6 +8,40 @@ type TypedSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
 type TypedServer = Server<ClientToServerEvents, ServerToClientEvents>;
 
 export function setupSocketHandlers(io: TypedServer, socket: TypedSocket): void {
+
+  // Register session token
+  socket.on('session:register', (data: { sessionToken: string }) => {
+    registerSession(socket.id, data.sessionToken);
+  });
+
+  // Rejoin after disconnect
+  socket.on('room:rejoin', (data: { sessionToken: string }) => {
+    try {
+      const result = rejoinRoom(data.sessionToken, socket.id);
+      if (!result) {
+        socket.emit('rejoin:failed');
+        return;
+      }
+      const { room, player } = result;
+      socket.join(room.id);
+      registerSession(socket.id, data.sessionToken);
+      console.log(`🔄 ${player.name} rejoined room ${room.code}`);
+
+      // Send current state
+      socket.emit('room:updated', room);
+      if (room.gameState.phase !== 'waiting' && room.gameState.phase !== 'finished') {
+        socket.emit('game:started', room.gameState);
+        socket.emit('player:hand', player.hand);
+        if (room.gameState.clue) {
+          socket.emit('game:clue', room.gameState.clue);
+        }
+      }
+      // Notify others
+      io.to(room.id).emit('room:updated', room);
+    } catch (err: any) {
+      socket.emit('rejoin:failed');
+    }
+  });
 
   socket.on('room:create', (data) => {
     try {
@@ -185,26 +219,30 @@ export function setupSocketHandlers(io: TypedServer, socket: TypedSocket): void 
     })));
   });
 
-  // Simple disconnect - remove after 15s
+  // Disconnect - grace period 60s for rejoin
   socket.on('disconnect', () => {
     const room = getRoomByPlayer(socket.id);
     if (!room) return;
     const player = room.gameState.players.find(p => p.id === socket.id);
-    console.log(`💀 ${player?.name || socket.id} disconnected`);
-
-    setTimeout(() => {
-      const currentRoom = getRoomByPlayer(socket.id);
-      if (!currentRoom) return;
-      const p = currentRoom.gameState.players.find(pl => pl.id === socket.id);
-      if (p && !p.isConnected) {
-        const { room: updatedRoom, tooFewPlayers } = removePlayer(socket.id);
-        if (updatedRoom && tooFewPlayers) {
-          updatedRoom.gameState.phase = 'finished';
-          io.to(updatedRoom.id).emit('game:cancelled', 'not_enough_players');
-        }
-      }
-    }, 15000);
+    const disconnectedId = socket.id;
+    console.log(`💀 ${player?.name || socket.id} disconnected (60s grace)`);
 
     if (player) player.isConnected = false;
+
+    setTimeout(() => {
+      const currentRoom = getRoomByPlayer(disconnectedId);
+      if (!currentRoom) return;
+      const p = currentRoom.gameState.players.find(pl => pl.id === disconnectedId);
+      if (p && !p.isConnected) {
+        const { room: updatedRoom, tooFewPlayers } = removePlayer(disconnectedId);
+        if (updatedRoom) {
+          io.to(updatedRoom.id).emit('room:updated', updatedRoom);
+          if (tooFewPlayers) {
+            updatedRoom.gameState.phase = 'finished';
+            io.to(updatedRoom.id).emit('game:cancelled', 'not_enough_players');
+          }
+        }
+      }
+    }, 60000);
   });
 }

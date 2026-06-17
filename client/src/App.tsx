@@ -13,7 +13,7 @@ type Screen = 'landing' | 'lobby' | 'game' | 'results' | 'cancelled' | 'challeng
 
 export function App() {
   const { lang, t, toggleLang } = useLanguage();
-  const { socket, isConnected } = useSocket();
+  const { socket, isConnected, setInRoom } = useSocket();
   const [screen, setScreen] = useState<Screen>('landing');
   const [room, setRoom] = useState<Room | null>(null);
   const [gameState, setGameState] = useState<GameState | null>(null);
@@ -39,9 +39,15 @@ export function App() {
     // LOBBY
     socket.on('room:updated', (updatedRoom) => {
       setRoom(updatedRoom);
+      setInRoom(true);
       if (updatedRoom.gameState.phase === 'waiting') {
         setScreen('lobby');
       }
+    });
+
+    socket.on('rejoin:failed', () => {
+      // Rejoin failed, go back to landing
+      setInRoom(false);
     });
 
     // GAME START — this is the main state setter
@@ -158,6 +164,7 @@ export function App() {
   }, [socket]);
 
   const handleLeaveGame = useCallback(() => {
+    setInRoom(false);
     socket?.disconnect();
     socket?.connect();
     setScreen('landing');
@@ -166,16 +173,17 @@ export function App() {
     setMyHand([]);
     setRevealedCards([]);
     setPlayedCount(0);
-  }, [socket]);
+  }, [socket, setInRoom]);
 
   const handleBackToLobby = useCallback(() => {
+    setInRoom(false);
     setScreen('landing');
     setRoom(null);
     setGameState(null);
     setMyHand([]);
     setRevealedCards([]);
     setPlayedCount(0);
-  }, []);
+  }, [setInRoom]);
 
   // Inject playedCount into gameState for display
   const displayGameState = gameState ? {
