@@ -1,11 +1,20 @@
 import type { Server, Socket } from 'socket.io';
 import type { ClientToServerEvents, ServerToClientEvents } from '../../../shared/types';
-import { createRoom, joinRoom, startGame, getRoomByPlayer, removePlayer, rejoinRoom, registerSession, getSessionToken } from '../game/rooms';
+import { createRoom, joinRoom, startGame, getRoomByPlayer, removePlayer, rejoinRoom, registerSession, getSessionToken, getRejoinDiagnostics } from '../game/rooms';
 import { submitClue, playCard, submitVote, nextRound } from '../game/engine';
 import { getStats, updateStats, getLeaderboard, getWeeklyLeaderboard } from '../game/stats';
+import { report } from '../util/report';
+import type { Room } from '../../../shared/types';
 
 type TypedSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
 type TypedServer = Server<ClientToServerEvents, ServerToClientEvents>;
+
+// Human-readable roster for debug embeds: name + role + connection dot.
+function playersSummary(room: Room): string {
+  return room.gameState.players
+    .map(p => `${p.isConnected ? '🟢' : '🔴'} ${p.name}${p.id === room.hostId ? ' 👑' : ''}${p.isStoryteller ? ' 🎤' : ''}`)
+    .join('\n') || '—';
+}
 
 export function setupSocketHandlers(io: TypedServer, socket: TypedSocket): void {
 
@@ -20,6 +29,17 @@ export function setupSocketHandlers(io: TypedServer, socket: TypedSocket): void 
       const result = rejoinRoom(data.sessionToken, socket.id);
       if (!result) {
         socket.emit('rejoin:failed');
+        const diag = getRejoinDiagnostics(data.sessionToken);
+        report('🚪 Rejoin falló — jugador no pudo volver', [
+          { name: 'Sala', value: diag.roomCode ?? '(sin mapeo de token)', inline: true },
+          { name: 'Fase', value: String(diag.phase ?? '—'), inline: true },
+          { name: 'Jugador', value: diag.playerName ?? '—', inline: true },
+          { name: 'Token→sala', value: diag.hasTokenMapping ? 'sí' : 'NO', inline: true },
+          { name: 'Sala existe', value: diag.roomExists ? 'sí' : 'NO', inline: true },
+          { name: 'Player encontrado', value: diag.playerFound ? 'sí' : 'NO', inline: true },
+          { name: 'Jugadores (conectados)', value: `${diag.playerCount} (${diag.connectedCount})`, inline: true },
+          { name: 'socket nuevo', value: socket.id, inline: true },
+        ], { dedupKey: `rejoin-fail-${data.sessionToken}` });
         return;
       }
       const { room, player } = result;
@@ -234,7 +254,29 @@ export function setupSocketHandlers(io: TypedServer, socket: TypedSocket): void 
       if (!currentRoom) return;
       const p = currentRoom.gameState.players.find(pl => pl.id === disconnectedId);
       if (p && !p.isConnected) {
+        // Capture context BEFORE removal for the debug report.
+        const phaseBefore = currentRoom.gameState.phase;
+        const roundBefore = currentRoom.gameState.round;
+        const wasInGame = phaseBefore !== 'waiting' && phaseBefore !== 'finished';
+        const droppedName = p.name;
+        const codeBefore = currentRoom.code;
+        const rosterBefore = playersSummary(currentRoom);
+
         const { room: updatedRoom, tooFewPlayers } = removePlayer(disconnectedId);
+
+        // This is the "se salió durante la partida" event — report it for debugging.
+        if (wasInGame) {
+          report('💀 Jugador expulsado durante la partida (no se reconectó en 60s)', [
+            { name: 'Jugador', value: droppedName, inline: true },
+            { name: 'Sala', value: codeBefore, inline: true },
+            { name: 'Fase', value: phaseBefore, inline: true },
+            { name: 'Ronda', value: String(roundBefore), inline: true },
+            { name: 'Partida cancelada', value: tooFewPlayers ? 'SÍ (quedaron <3)' : 'no', inline: true },
+            { name: 'Socket', value: disconnectedId, inline: true },
+            { name: 'Jugadores al desconectar', value: rosterBefore, inline: false },
+          ], { dedupKey: `drop-${disconnectedId}` });
+        }
+
         if (updatedRoom) {
           io.to(updatedRoom.id).emit('room:updated', updatedRoom);
           if (tooFewPlayers) {
@@ -244,5 +286,17 @@ export function setupSocketHandlers(io: TypedServer, socket: TypedSocket): void 
         }
       }
     }, 60000);
+  });
+
+  // Client-side debug report (browser perspective). Routed through the server so the
+  // webhook URL never ships in the public client bundle.
+  socket.on('debug:report', (data) => {
+    report(`📱 Reporte del cliente: ${data.event}`, [
+      { name: 'Pantalla', value: data.screen ?? '—', inline: true },
+      { name: 'Sala', value: data.roomCode ?? '—', inline: true },
+      { name: 'Token', value: data.sessionToken ? data.sessionToken.slice(0, 8) + '…' : '—', inline: true },
+      { name: 'Detalle', value: data.detail ?? '—', inline: false },
+      { name: 'Navegador', value: data.userAgent ?? '—', inline: false },
+    ], { color: 0xf7931a, dedupKey: `client-${data.event}-${socket.id}` });
   });
 }

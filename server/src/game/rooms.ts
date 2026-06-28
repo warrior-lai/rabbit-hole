@@ -3,8 +3,12 @@ import { createGameState } from './engine';
 
 const rooms = new Map<string, Room>();
 const playerRooms = new Map<string, string>(); // socketId -> roomId
-const sessionToSocket = new Map<string, string>(); // sessionToken -> socketId
+const sessionToSocket = new Map<string, string>(); // sessionToken -> socketId (current, clobbered on reconnect)
 const socketToSession = new Map<string, string>(); // socketId -> sessionToken
+// Stable token-based ownership for rejoin — NOT touched by session:register, so a
+// reconnecting socket can always find its old player even after the token->socket map moved.
+const tokenToRoom = new Map<string, string>();     // sessionToken -> roomId
+const tokenToPlayerId = new Map<string, string>(); // sessionToken -> current socketId of that player
 
 function generateCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -62,7 +66,17 @@ export function createRoom(
 
   rooms.set(roomId, room);
   playerRooms.set(hostId, roomId);
+  bindToken(hostId, roomId);
   return room;
+}
+
+// Associate this socket's session token with its room+player so rejoin can find it
+// again after the socket id changes. Safe to call even if no token registered yet.
+function bindToken(socketId: string, roomId: string): void {
+  const token = socketToSession.get(socketId);
+  if (!token) return;
+  tokenToRoom.set(token, roomId);
+  tokenToPlayerId.set(token, socketId);
 }
 
 export function joinRoom(
@@ -89,19 +103,21 @@ export function joinRoom(
 
   room.gameState.players.push(player);
   playerRooms.set(playerId, room.id);
+  bindToken(playerId, room.id);
   return room;
 }
 
 export function rejoinRoom(sessionToken: string, newSocketId: string): { room: Room; player: Player } | null {
-  const oldSocketId = sessionToSocket.get(sessionToken);
-  if (!oldSocketId) return null;
-
-  const roomId = playerRooms.get(oldSocketId);
+  // Use the stable token->room/player maps. These are NOT overwritten by session:register,
+  // so they still point at the disconnected player even though the client already
+  // re-registered the token under the new socket id during the reconnect handshake.
+  const roomId = tokenToRoom.get(sessionToken);
   if (!roomId) return null;
 
   const room = rooms.get(roomId);
   if (!room) return null;
 
+  const oldSocketId = tokenToPlayerId.get(sessionToken);
   const player = room.gameState.players.find(p => p.id === oldSocketId);
   if (!player) return null;
 
@@ -109,7 +125,7 @@ export function rejoinRoom(sessionToken: string, newSocketId: string): { room: R
   player.id = newSocketId;
   player.isConnected = true;
 
-  playerRooms.delete(oldSocketId);
+  if (oldSocketId) playerRooms.delete(oldSocketId);
   playerRooms.set(newSocketId, roomId);
 
   // Update host if needed
@@ -122,12 +138,32 @@ export function rejoinRoom(sessionToken: string, newSocketId: string): { room: R
     room.gameState.currentStorytellerId = newSocketId;
   }
 
-  // Update session maps
+  // Update all maps to the new socket id
   sessionToSocket.set(sessionToken, newSocketId);
-  socketToSession.delete(oldSocketId);
+  if (oldSocketId) socketToSession.delete(oldSocketId);
   socketToSession.set(newSocketId, sessionToken);
+  tokenToPlayerId.set(sessionToken, newSocketId);
 
   return { room, player };
+}
+
+// Why would a rejoin fail? Used only for debug reports — does not mutate anything.
+export function getRejoinDiagnostics(sessionToken: string) {
+  const roomId = tokenToRoom.get(sessionToken);
+  const room = roomId ? rooms.get(roomId) : undefined;
+  const oldSocketId = tokenToPlayerId.get(sessionToken);
+  const player = room?.gameState.players.find(p => p.id === oldSocketId);
+  return {
+    hasTokenMapping: !!roomId,
+    roomExists: !!room,
+    roomCode: room?.code ?? null,
+    phase: room?.gameState.phase ?? null,
+    oldSocketId: oldSocketId ?? null,
+    playerFound: !!player,
+    playerName: player?.name ?? null,
+    playerCount: room?.gameState.players.length ?? 0,
+    connectedCount: room?.gameState.players.filter(p => p.isConnected).length ?? 0,
+  };
 }
 
 export function registerSession(socketId: string, sessionToken: string): void {
@@ -183,6 +219,14 @@ export function removePlayer(playerId: string): { room: Room | undefined; tooFew
   }
 
   playerRooms.delete(playerId);
+
+  // Grace period expired for this player — drop their stable token ownership so a
+  // late reconnect won't resurrect a player the game has already moved past.
+  const token = socketToSession.get(playerId);
+  if (token && tokenToPlayerId.get(token) === playerId) {
+    tokenToRoom.delete(token);
+    tokenToPlayerId.delete(token);
+  }
 
   // If all players disconnected, remove room
   const connected = room.gameState.players.filter(p => p.isConnected);

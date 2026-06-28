@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import type { Room } from '@shared/types';
+import type { TranslationFn } from '../i18n/translations';
 
 interface LobbyProps {
-  t: (key: string) => string;
+  t: TranslationFn;
   room: Room;
   playerId: string;
   onStart: () => void;

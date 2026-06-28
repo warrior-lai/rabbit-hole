@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useLanguage } from './hooks/useLanguage';
 import { useSocket } from './hooks/useSocket';
 import { Landing } from './pages/Landing';
@@ -7,13 +7,14 @@ import { GameBoard } from './components/GameBoard';
 import { GameOver } from './components/GameOver';
 import { GameCancelled } from './components/GameCancelled';
 import { Challenge } from './components/Challenge';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import type { Room, GameState, PlayerProfile, LeaderboardEntry } from '@shared/types';
 
 type Screen = 'landing' | 'lobby' | 'game' | 'results' | 'cancelled' | 'challenge';
 
 export function App() {
   const { lang, t, toggleLang } = useLanguage();
-  const { socket, isConnected, setInRoom } = useSocket();
+  const { socket, isConnected, setInRoom, reportDebug } = useSocket();
   const [screen, setScreen] = useState<Screen>('landing');
   const [room, setRoom] = useState<Room | null>(null);
   const [gameState, setGameState] = useState<GameState | null>(null);
@@ -33,6 +34,12 @@ export function App() {
     return id;
   });
 
+  // Refs so the one-time socket listeners can read the latest screen/room.
+  const screenRef = useRef<Screen>('landing');
+  const roomCodeRef = useRef<string | undefined>(undefined);
+  useEffect(() => { screenRef.current = screen; }, [screen]);
+  useEffect(() => { roomCodeRef.current = room?.code; }, [room]);
+
   useEffect(() => {
     if (!socket) return;
 
@@ -46,7 +53,12 @@ export function App() {
     });
 
     socket.on('rejoin:failed', () => {
-      // Rejoin failed, go back to landing
+      // Rejoin failed, go back to landing — and report it (the player got bounced).
+      reportDebug('rejoin:failed', {
+        screen: screenRef.current,
+        roomCode: roomCodeRef.current,
+        detail: 'El cliente intentó reconectarse a la sala y el servidor lo rechazó.',
+      });
       setInRoom(false);
     });
 
@@ -54,7 +66,11 @@ export function App() {
     socket.on('game:started', (state) => {
       setGameState(state);
       setRevealedCards([]);
-      setPlayedCount(0);
+      setPlayedCount(
+        state.phase === 'choosing' ? state.playedCards.length :
+        state.phase === 'voting' ? state.votes.length :
+        0
+      );
       setLastRoundResult(null);
       setScreen('game');
     });
@@ -68,9 +84,14 @@ export function App() {
       // Don't overwrite scoring — game:round-result handles that with full data
       if (phase === 'scoring') return;
       setGameState(prev => prev ? { ...prev, phase } : null);
-      if (phase === 'choosing' || phase === 'storytelling') {
+      if (phase === 'storytelling') {
         setPlayedCount(0);
         setRevealedCards([]);
+      } else if (phase === 'choosing') {
+        setPlayedCount(1);
+        setRevealedCards([]);
+      } else if (phase === 'voting') {
+        setPlayedCount(0);
       }
     });
 
@@ -84,6 +105,7 @@ export function App() {
 
     socket.on('game:cards-revealed', (cards) => {
       setRevealedCards(cards);
+      setGameState(prev => prev ? { ...prev, playedCards: cards } : null);
     });
 
     // SCORING
@@ -108,7 +130,12 @@ export function App() {
       setScreen('results');
     });
 
-    socket.on('game:cancelled', () => {
+    socket.on('game:cancelled', (reason) => {
+      reportDebug('game:cancelled', {
+        screen: screenRef.current,
+        roomCode: roomCodeRef.current,
+        detail: `Partida cancelada por el servidor. Motivo: ${reason}`,
+      });
       setScreen('cancelled');
     });
 
@@ -186,14 +213,6 @@ export function App() {
     setPlayedCount(0);
   }, [setInRoom]);
 
-  // Inject playedCount into gameState for display
-  const displayGameState = gameState ? {
-    ...gameState,
-    playedCards: playedCount > gameState.playedCards.length
-      ? Array.from({ length: playedCount }, (_, i) => gameState.playedCards[i] || { playerId: `p${i}`, cardId: `c${i}` })
-      : gameState.playedCards,
-  } : null;
-
   return (
     <>
       {/* Animated background */}
@@ -235,6 +254,14 @@ export function App() {
         </button>
       )}
 
+      <ErrorBoundary
+        lang={lang}
+        onError={(err, stack) => reportDebug('client:crash', {
+          screen: screenRef.current,
+          roomCode: roomCodeRef.current,
+          detail: `${err.name}: ${err.message}\n${stack.split('\n').slice(0, 6).join('\n')}`,
+        })}
+      >
       {screen === 'landing' && (
         <Landing
           t={t} lang={lang} toggleLang={toggleLang}
@@ -252,11 +279,12 @@ export function App() {
         <Lobby t={t} room={room} playerId={socket.id || ''} onStart={handleStartGame} />
       )}
 
-      {screen === 'game' && displayGameState && socket && (
+      {screen === 'game' && gameState && socket && (
         <GameBoard
-          t={t} gameState={displayGameState}
+          t={t} gameState={gameState}
           playerId={socket.id || ''}
           myHand={myHand}
+          playedCount={playedCount}
           revealedCards={revealedCards}
           onSubmitClue={handleSubmitClue}
           onPlayCard={handlePlayCard}
@@ -284,6 +312,7 @@ export function App() {
       {screen === 'cancelled' && (
         <GameCancelled lang={lang} reason="not_enough_players" onNewGame={handleBackToLobby} />
       )}
+      </ErrorBoundary>
     </>
   );
 }

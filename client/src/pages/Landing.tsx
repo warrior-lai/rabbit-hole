@@ -5,9 +5,10 @@ import { NameOrNostr } from '../components/NameOrNostr';
 import { Profile } from '../components/Profile';
 import { Leaderboard } from '../components/Leaderboard';
 import { ArtGallery } from '../components/ArtGallery';
+import type { TranslationFn } from '../i18n/translations';
 
 interface LandingProps {
-  t: (key: string) => string;
+  t: TranslationFn;
   lang: Language;
   toggleLang: () => void;
   onQuickPlay: (name: string, npub?: string) => void;

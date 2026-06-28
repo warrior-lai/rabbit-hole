@@ -9,10 +9,14 @@ const SERVER_URL = import.meta.env.VITE_SERVER_URL ||
   (window.location.hostname === 'localhost' ? 'http://localhost:3001' : window.location.origin);
 
 function getSessionToken(): string {
-  let token = localStorage.getItem('rh-session-token');
+  // sessionStorage (not localStorage) so each browser TAB has its own identity:
+  // it survives reloads/reconnects in the same tab (rejoin works) but two tabs of
+  // the same browser get distinct tokens — otherwise multiplayer testing in tabs
+  // collides identities and kicks players out.
+  let token = sessionStorage.getItem('rh-session-token');
   if (!token) {
     try { token = crypto.randomUUID(); } catch { token = Math.random().toString(36).substring(2) + Date.now().toString(36); }
-    localStorage.setItem('rh-session-token', token);
+    sessionStorage.setItem('rh-session-token', token);
   }
   return token;
 }
@@ -24,6 +28,19 @@ export function useSocket() {
   const wasInRoom = useRef(false);
 
   const setInRoom = (val: boolean) => { wasInRoom.current = val; };
+
+  // Send a debug report from the browser's perspective. The server forwards it to
+  // Discord, so the webhook URL stays out of the public client bundle.
+  const reportDebug = (event: string, info: { screen?: string; roomCode?: string; detail?: string } = {}) => {
+    socketRef.current?.emit('debug:report', {
+      event,
+      screen: info.screen,
+      roomCode: info.roomCode,
+      detail: info.detail,
+      sessionToken: sessionToken.current,
+      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
+    });
+  };
 
   useEffect(() => {
     const socket: TypedSocket = io(SERVER_URL, {
@@ -54,5 +71,5 @@ export function useSocket() {
     };
   }, []);
 
-  return { socket: socketRef.current, isConnected, setInRoom };
+  return { socket: socketRef.current, isConnected, setInRoom, reportDebug };
 }
