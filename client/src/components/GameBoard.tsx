@@ -6,12 +6,14 @@ import { RoundResults } from './RoundResults';
 import { Scoreboard } from './Scoreboard';
 import { Timer } from './Timer';
 import { PhaseInstruction } from './PhaseInstruction';
+import type { TranslationFn } from '../i18n/translations';
 
 interface GameBoardProps {
-  t: (key: string) => string;
+  t: TranslationFn;
   gameState: GameState;
   playerId: string;
   myHand: string[];
+  playedCount: number;
   revealedCards: { playerId: string; cardId: string }[];
   lastRoundResult: any;
   onSubmitClue: (cardId: string, clue: string) => void;
@@ -28,7 +30,7 @@ const VOTE_SECONDS = 30;
 
 export function GameBoard({
   t, gameState, playerId, myHand, revealedCards,
-  onSubmitClue, onPlayCard, onVote, onNextRound, onLeaveGame, onEndGame, isHost, lastRoundResult
+  playedCount, onSubmitClue, onPlayCard, onVote, onNextRound, onLeaveGame, onEndGame, isHost, lastRoundResult
 }: GameBoardProps) {
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
   const [choosingCard, setChoosingCard] = useState<string | null>(null);
@@ -329,7 +331,6 @@ export function GameBoard({
             {/* Show checkmarks for who voted */}
             <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
               {activePlayers.filter(p => p.id !== gameState.currentStorytellerId).map(p => {
-                const voted = playedCount > 0; // We track count, not individual
                 return (
                   <span key={p.id} style={{
                     padding: '4px 12px',

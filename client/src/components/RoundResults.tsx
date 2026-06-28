@@ -1,8 +1,9 @@
 import type { RoundResult, Player } from '@shared/types';
 import { getCardImage } from './CardHand';
+import type { TranslationFn } from '../i18n/translations';
 
 interface RoundResultsProps {
-  t: (key: string) => string;
+  t: TranslationFn;
   result: RoundResult;
   players: Player[];
   playerId: string;

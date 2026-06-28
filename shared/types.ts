@@ -129,4 +129,5 @@ export interface ClientToServerEvents {
   'leaderboard:get': (data: { period: 'all' | 'weekly' }) => void;
   'session:register': (data: { sessionToken: string }) => void;
   'room:rejoin': (data: { sessionToken: string }) => void;
+  'debug:report': (data: { event: string; screen?: string; roomCode?: string; sessionToken?: string; userAgent?: string; detail?: string }) => void;
 }

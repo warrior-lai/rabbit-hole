@@ -1,3 +1,8 @@
+// Load server/.env for local dev (no-op in production, where the host injects env vars).
+// process.loadEnvFile is built into Node 20.12+/22+ — wrapped so a missing file or an
+// older runtime is harmless.
+try { (process as any).loadEnvFile?.(); } catch { /* no .env file — fine */ }
+
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';

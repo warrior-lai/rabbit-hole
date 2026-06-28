@@ -9,3 +9,7 @@ services:
         value: 10000
       - key: NODE_ENV
         value: production
+      # Set the value in the Render dashboard (Environment tab). sync:false keeps the
+      # secret out of the repo. Optional — if unset, debug reports are just disabled.
+      - key: DISCORD_WEBHOOK_URL
+        sync: false

@@ -1,9 +1,10 @@
 import { useEffect, useState, useRef } from 'react';
 import type { Player } from '@shared/types';
 import confetti from 'canvas-confetti';
+import type { TranslationFn } from '../i18n/translations';
 
 interface GameOverProps {
-  t: (key: string) => string;
+  t: TranslationFn;
   players: Player[];
   onPlayAgain: () => void;
   onBackToLobby: () => void;
